@@ -18,6 +18,7 @@ const selectedApplication = ref<OfficerApplication | null>(null)
 const selectedDecision = ref<'approved' | 'rejected'>('approved')
 const reason = ref('')
 const isUpdating = ref(false)
+const actionError = ref('')
 
 const filteredApplications = computed(() => {
   if (selectedStatus.value === 'all') return applications.value
@@ -28,25 +29,37 @@ function openActionDialog(application: OfficerApplication) {
   selectedApplication.value = application
   selectedDecision.value = 'approved'
   reason.value = ''
+  actionError.value = ''
   isDialogOpen.value = true
 }
 
 async function updateStatus() {
   if (!selectedApplication.value) return
+  actionError.value = ''
+
+  if (selectedDecision.value === 'rejected' && !reason.value.trim()) {
+    actionError.value = 'กรุณาระบุเหตุผลเมื่อไม่อนุมัติ'
+    return
+  }
 
   isUpdating.value = true
-  const response = await mockUpdateApplicationStatus(
-    selectedApplication.value.id,
-    selectedDecision.value,
-    reason.value.trim(),
-  )
-  const application = applications.value.find((item) => item.id === selectedApplication.value?.id)
-  if (application) {
-    application.status = response.data.status
-    application.reason = response.data.reason
+  try {
+    const response = await mockUpdateApplicationStatus(
+      selectedApplication.value.id,
+      selectedDecision.value,
+      reason.value.trim(),
+    )
+    const application = applications.value.find((item) => item.id === selectedApplication.value?.id)
+    if (application) {
+      application.status = response.data.status
+      application.reason = response.data.reason
+    }
+    isDialogOpen.value = false
+  } catch {
+    actionError.value = 'ไม่สามารถบันทึกสถานะได้ กรุณาลองใหม่อีกครั้ง'
+  } finally {
+    isUpdating.value = false
   }
-  isUpdating.value = false
-  isDialogOpen.value = false
 }
 
 onMounted(async () => {
@@ -101,6 +114,10 @@ onMounted(async () => {
         </DialogHeader>
 
         <div class="space-y-3 py-4">
+          <dl v-if="selectedApplication" class="space-y-2 rounded-md bg-slate-50 p-3 text-sm">
+            <div class="flex justify-between gap-4"><dt class="text-slate-500">รายได้ต่อปี</dt><dd>{{ selectedApplication.annualIncome.toLocaleString('th-TH') }} บาท</dd></div>
+            <div class="flex justify-between gap-4"><dt class="text-slate-500">สถานะเดิม</dt><dd><Badge :class="statusClass(selectedApplication.status)">{{ statusLabel(selectedApplication.status) }}</Badge></dd></div>
+          </dl>
           <p class="text-sm font-medium">เลือกการตัดสินใจ</p>
           <div class="grid grid-cols-2 gap-3">
             <Button
@@ -127,7 +144,8 @@ onMounted(async () => {
             </Button>
           </div>
           <p class="text-xs text-slate-500">เลือกแล้ว: {{ selectedDecision === 'approved' ? 'Approve' : 'Reject' }}</p>
-          <Input v-model="reason" placeholder="เหตุผล (ถ้ามี)" />
+          <Input v-model="reason" :placeholder="selectedDecision === 'rejected' ? 'เหตุผล (จำเป็น)' : 'เหตุผล (ถ้ามี)'" />
+          <p v-if="actionError" class="rounded-md bg-red-50 p-3 text-sm text-red-700">{{ actionError }}</p>
         </div>
 
         <DialogFooter>
