@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { mockCreateApplication } from '../services/applicationApi'
 
 const citizenId = ref('')
@@ -78,27 +81,27 @@ async function handleSubmit() {
     <form v-else @submit.prevent="handleSubmit">
       <label>
         National ID
-        <input v-model="citizenId" type="text" />
+        <Input v-model="citizenId" type="text" />
       </label>
 
       <label>
         Full name
-        <input v-model="fullName" type="text" />
+        <Input v-model="fullName" type="text" />
       </label>
 
       <label>
         Date of birth
-        <input v-model="dateOfBirth" type="date" />
+        <Input v-model="dateOfBirth" type="date" />
       </label>
 
       <label>
         Annual household income
-        <input v-model="annualIncome" type="number" min="0" />
+        <Input v-model="annualIncome" type="number" min="0" />
       </label>
 
       <label>
         Current address
-        <textarea v-model="currentAddress" rows="3"></textarea>
+        <Textarea v-model="currentAddress" :rows="3" />
       </label>
 
       <label>
@@ -119,9 +122,9 @@ async function handleSubmit() {
 
       <p v-if="apiError">{{ apiError }}</p>
 
-      <button type="submit" :disabled="isSubmitting">
+      <Button type="submit" :disabled="isSubmitting">
         {{ isSubmitting ? 'กำลังส่ง...' : 'Submit' }}
-      </button>
+      </Button>
     </form>
   </main>
 </template>
