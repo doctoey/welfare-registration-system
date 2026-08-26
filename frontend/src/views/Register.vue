@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { mockCreateApplication } from '../services/applicationApi'
@@ -105,7 +106,7 @@ async function handleSubmit() {
       </label>
 
       <label>
-        <input v-model="consent" type="checkbox" />
+        <Checkbox v-model:checked="consent" />
         I agree that the information provided is correct.
       </label>
 
