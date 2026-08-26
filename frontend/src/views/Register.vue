@@ -2,7 +2,6 @@
 import { ref } from 'vue'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { isValidThaiCitizenId } from '@/lib/thaiCitizenId'
@@ -25,7 +24,26 @@ function hasValidationError(message: string) {
   return validationErrors.value.includes(message)
 }
 
+function resetForm() {
+  citizenId.value = ''
+  fullName.value = ''
+  dateOfBirth.value = ''
+  annualIncome.value = ''
+  currentAddress.value = ''
+  consent.value = false
+  validationErrors.value = []
+  apiError.value = ''
+  referenceNumber.value = ''
+  submitted.value = false
+}
+
+function updateCitizenId(event: Event) {
+  citizenId.value = (event.target as HTMLInputElement).value.replace(/\D/g, '')
+}
+
 async function handleSubmit() {
+  if (isSubmitting.value) return
+
   validationErrors.value = []
   apiError.value = ''
 
@@ -64,6 +82,7 @@ async function handleSubmit() {
     isSubmitting.value = false
   }
 }
+
 </script>
 
 <template>
@@ -71,15 +90,17 @@ async function handleSubmit() {
     <Card v-if="submitted" class="mx-auto max-w-2xl p-8 text-center">
       <h1 class="text-2xl font-semibold">ส่งคำร้องสำเร็จ</h1>
       <p class="mt-3 text-slate-600">หมายเลขอ้างอิง: {{ referenceNumber }}</p>
+      <Button class="mt-6" variant="outline" @click="resetForm">กลับไปกรอกคำร้องใหม่</Button>
     </Card>
 
     <Card v-else class="mx-auto max-w-2xl">
-      <form class="space-y-5 p-6" @submit.prevent="handleSubmit">
+      <div class="space-y-5 p-6">
         <h1 class="text-2xl font-semibold">Welfare Registration System</h1>
 
         <div class="space-y-2">
           <Label for="citizen-id">National ID <span class="text-red-600">*</span></Label>
-          <Input id="citizen-id" v-model="citizenId" type="text" :aria-invalid="hasValidationError('National ID is invalid')" />
+          <Input id="citizen-id" v-model="citizenId" type="text" :aria-invalid="hasValidationError('National ID is invalid')" @input="updateCitizenId" />
+          <p class="text-xs text-slate-500">Mock test ID: 1100400123450</p>
           <p v-if="hasValidationError('National ID is invalid')" class="text-sm text-red-600">National ID must be valid 13-digit Thai ID</p>
         </div>
 
@@ -108,16 +129,21 @@ async function handleSubmit() {
         </div>
 
         <div class="flex items-center gap-2">
-          <Checkbox id="consent" v-model:checked="consent" />
+          <input id="consent" v-model="consent" type="checkbox" class="h-4 w-4" />
           <Label for="consent">I agree that the information provided is correct. <span class="text-red-600">*</span></Label>
         </div>
 
       <p v-if="apiError" class="rounded-md bg-red-50 p-3 text-sm text-red-700">{{ apiError }}</p>
 
-        <Button type="submit" :disabled="isSubmitting">
+        <button
+          type="button"
+          :disabled="isSubmitting"
+          class="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+          @click="handleSubmit"
+        >
           {{ isSubmitting ? 'กำลังส่ง...' : 'Submit' }}
-        </Button>
-      </form>
+        </button>
+      </div>
     </Card>
   </main>
 </template>

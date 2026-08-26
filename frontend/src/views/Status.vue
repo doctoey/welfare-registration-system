@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { statusClass, statusLabel } from '@/lib/applicationStatus'
 import { isValidThaiCitizenId } from '@/lib/thaiCitizenId'
-import { mockGetApplicationStatus, type ApplicationStatus } from '../services/applicationApi'
+import { MOCK_CITIZEN_ID, mockGetApplicationStatus, type ApplicationStatus } from '../services/applicationApi'
 
 const citizenId = ref('')
 const status = ref<ApplicationStatus | null>(null)
@@ -48,6 +48,7 @@ async function searchStatus() {
         <div class="space-y-2">
           <Label for="status-citizen-id">National ID</Label>
           <Input id="status-citizen-id" v-model="citizenId" inputmode="numeric" maxlength="13" />
+          <p class="text-xs text-slate-500">Mock test ID: {{ MOCK_CITIZEN_ID }}</p>
         </div>
 
         <p v-if="errorMessage" class="rounded-md bg-red-50 p-3 text-sm text-red-700">{{ errorMessage }}</p>

@@ -1,5 +1,7 @@
 import axios from "axios";
 
+export const MOCK_CITIZEN_ID = '1100400123450';
+
 export interface CreateApplicationPayload {
   citizenId: string;
   fullName: string;
@@ -67,7 +69,7 @@ export function mockUpdateApplicationStatus(
 export function mockGetApplicationStatus(citizenId: string) {
   return new Promise<{ data: ApplicationStatus }>((resolve, reject) => {
     setTimeout(() => {
-      if (citizenId !== '1100400123459') {
+      if (citizenId !== MOCK_CITIZEN_ID) {
         reject(new Error('APPLICATION_NOT_FOUND'))
         return
       }
