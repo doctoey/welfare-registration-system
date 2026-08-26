@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -74,13 +75,14 @@ async function handleSubmit() {
 
 <template>
   <main>
-    <section v-if="submitted" class="mx-auto max-w-2xl rounded-xl border bg-white p-8 text-center shadow-sm">
+    <Card v-if="submitted" class="mx-auto max-w-2xl p-8 text-center">
       <h1 class="text-2xl font-semibold">ส่งคำร้องสำเร็จ</h1>
       <p class="mt-3 text-slate-600">หมายเลขอ้างอิง: {{ referenceNumber }}</p>
-    </section>
+    </Card>
 
-    <form v-else class="mx-auto max-w-2xl space-y-5 rounded-xl border bg-white p-6 shadow-sm" @submit.prevent="handleSubmit">
-      <h1 class="text-2xl font-semibold">Welfare Registration System</h1>
+    <Card v-else class="mx-auto max-w-2xl">
+      <form class="space-y-5 p-6" @submit.prevent="handleSubmit">
+        <h1 class="text-2xl font-semibold">Welfare Registration System</h1>
 
       <label class="block space-y-2 text-sm font-medium">
         National ID
@@ -118,9 +120,10 @@ async function handleSubmit() {
 
       <p v-if="apiError" class="rounded-md bg-red-50 p-3 text-sm text-red-700">{{ apiError }}</p>
 
-      <Button type="submit" :disabled="isSubmitting">
-        {{ isSubmitting ? 'กำลังส่ง...' : 'Submit' }}
-      </Button>
-    </form>
+        <Button type="submit" :disabled="isSubmitting">
+          {{ isSubmitting ? 'กำลังส่ง...' : 'Submit' }}
+        </Button>
+      </form>
+    </Card>
   </main>
 </template>
