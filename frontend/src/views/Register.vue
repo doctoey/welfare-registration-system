@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { ref } from 'vue'
+
+const citizenId = ref('')
 </script>
 
 <template>
@@ -8,8 +11,10 @@
     <form @submit.prevent>
       <label>
         National ID
-        <input type="text" />
+        <input v-model="citizenId" type="text" />
       </label>
+
+      <p>เลขบัตรที่กรอก: {{ citizenId }}</p>
 
       <button type="submit">
         Submit
