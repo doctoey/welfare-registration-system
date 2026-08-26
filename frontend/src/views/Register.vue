@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { mockCreateApplication } from '../services/applicationApi'
 
@@ -84,35 +85,35 @@ async function handleSubmit() {
       <form class="space-y-5 p-6" @submit.prevent="handleSubmit">
         <h1 class="text-2xl font-semibold">Welfare Registration System</h1>
 
-      <label class="block space-y-2 text-sm font-medium">
-        National ID
-        <Input v-model="citizenId" type="text" />
-      </label>
+      <div class="space-y-2">
+        <Label for="citizen-id">National ID</Label>
+        <Input id="citizen-id" v-model="citizenId" type="text" />
+      </div>
 
-      <label class="block space-y-2 text-sm font-medium">
-        Full name
-        <Input v-model="fullName" type="text" />
-      </label>
+      <div class="space-y-2">
+        <Label for="full-name">Full name</Label>
+        <Input id="full-name" v-model="fullName" type="text" />
+      </div>
 
-      <label class="block space-y-2 text-sm font-medium">
-        Date of birth
-        <Input v-model="dateOfBirth" type="date" />
-      </label>
+      <div class="space-y-2">
+        <Label for="date-of-birth">Date of birth</Label>
+        <Input id="date-of-birth" v-model="dateOfBirth" type="date" />
+      </div>
 
-      <label class="block space-y-2 text-sm font-medium">
-        Annual household income
-        <Input v-model="annualIncome" type="number" min="0" />
-      </label>
+      <div class="space-y-2">
+        <Label for="annual-income">Annual household income</Label>
+        <Input id="annual-income" v-model="annualIncome" type="number" min="0" />
+      </div>
 
-      <label class="block space-y-2 text-sm font-medium">
-        Current address
-        <Textarea v-model="currentAddress" :rows="3" />
-      </label>
+      <div class="space-y-2">
+        <Label for="current-address">Current address</Label>
+        <Textarea id="current-address" v-model="currentAddress" :rows="3" />
+      </div>
 
-      <label class="flex items-center gap-2 text-sm">
-        <Checkbox v-model:checked="consent" />
-        I agree that the information provided is correct.
-      </label>
+      <div class="flex items-center gap-2">
+        <Checkbox id="consent" v-model:checked="consent" />
+        <Label for="consent">I agree that the information provided is correct.</Label>
+      </div>
 
       <ul v-if="validationErrors.length > 0" class="space-y-1 rounded-md bg-red-50 p-3 text-sm text-red-700">
         <li v-for="error in validationErrors" :key="error">{{ error }}</li>
