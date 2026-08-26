@@ -9,11 +9,25 @@ const currentAddress = ref('')
 const consent = ref(false)
 const validationErrors = ref<string[]>([])
 
+function isValidThaiCitizenId(value: string): boolean {
+  const digits = value.replace(/\D/g, '')
+  if (digits.length !== 13) return false
+
+  let sum = 0
+  for (let index = 0; index < 12; index += 1) {
+    sum += Number(digits[index]) * (13 - index)
+  }
+
+  const checkDigit = (11 - (sum % 11)) % 10
+  return checkDigit === Number(digits[12])
+}
+
 function handleSubmit() {
   validationErrors.value = []
 
-  if (citizenId.value.trim().length !== 13) {
-    validationErrors.value.push('National ID must contain 13 digits')
+  const citizenIdDigits = citizenId.value.replace(/\D/g, '')
+  if (!isValidThaiCitizenId(citizenIdDigits)) {
+    validationErrors.value.push('National ID is invalid')
   }
   if (!fullName.value.trim()) validationErrors.value.push('Full name is required')
   if (!dateOfBirth.value) validationErrors.value.push('Date of birth is required')
@@ -26,7 +40,7 @@ function handleSubmit() {
   if (validationErrors.value.length > 0) return
 
   const payload = {
-    citizenId: citizenId.value,
+    citizenId: citizenIdDigits,
     fullName: fullName.value.trim(),
     birthDate: dateOfBirth.value,
     annualIncome: Number(annualIncome.value),
