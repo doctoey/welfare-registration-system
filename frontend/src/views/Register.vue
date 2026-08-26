@@ -20,6 +20,10 @@ const apiError = ref('')
 const submitted = ref(false)
 const referenceNumber = ref('')
 
+function hasValidationError(message: string) {
+  return validationErrors.value.includes(message)
+}
+
 function isValidThaiCitizenId(value: string): boolean {
   const digits = value.replace(/\D/g, '')
   if (digits.length !== 13) return false
@@ -85,39 +89,40 @@ async function handleSubmit() {
       <form class="space-y-5 p-6" @submit.prevent="handleSubmit">
         <h1 class="text-2xl font-semibold">Welfare Registration System</h1>
 
-      <div class="space-y-2">
-        <Label for="citizen-id">National ID</Label>
-        <Input id="citizen-id" v-model="citizenId" type="text" />
-      </div>
+        <div class="space-y-2">
+          <Label for="citizen-id">National ID <span class="text-red-600">*</span></Label>
+          <Input id="citizen-id" v-model="citizenId" type="text" :aria-invalid="hasValidationError('National ID is invalid')" />
+          <p v-if="hasValidationError('National ID is invalid')" class="text-sm text-red-600">National ID must be valid 13-digit Thai ID</p>
+        </div>
 
-      <div class="space-y-2">
-        <Label for="full-name">Full name</Label>
-        <Input id="full-name" v-model="fullName" type="text" />
-      </div>
+        <div class="space-y-2">
+          <Label for="full-name">Full name <span class="text-red-600">*</span></Label>
+          <Input id="full-name" v-model="fullName" :aria-invalid="hasValidationError('Full name is required')" />
+          <p v-if="hasValidationError('Full name is required')" class="text-sm text-red-600">Full name is required</p>
+        </div>
 
-      <div class="space-y-2">
-        <Label for="date-of-birth">Date of birth</Label>
-        <Input id="date-of-birth" v-model="dateOfBirth" type="date" />
-      </div>
+        <div class="space-y-2">
+          <Label for="date-of-birth">Date of birth <span class="text-red-600">*</span></Label>
+          <Input id="date-of-birth" v-model="dateOfBirth" type="date" :aria-invalid="hasValidationError('Date of birth is required')" />
+          <p v-if="hasValidationError('Date of birth is required')" class="text-sm text-red-600">Date of birth is required</p>
+        </div>
 
-      <div class="space-y-2">
-        <Label for="annual-income">Annual household income</Label>
-        <Input id="annual-income" v-model="annualIncome" type="number" min="0" />
-      </div>
+        <div class="space-y-2">
+          <Label for="annual-income">Annual household income <span class="text-red-600">*</span></Label>
+          <Input id="annual-income" v-model="annualIncome" type="number" min="0" :aria-invalid="hasValidationError('Annual income is required')" />
+          <p v-if="hasValidationError('Annual income is required')" class="text-sm text-red-600">Annual income is required</p>
+        </div>
 
-      <div class="space-y-2">
-        <Label for="current-address">Current address</Label>
-        <Textarea id="current-address" v-model="currentAddress" :rows="3" />
-      </div>
+        <div class="space-y-2">
+          <Label for="current-address">Current address <span class="text-red-600">*</span></Label>
+          <Textarea id="current-address" v-model="currentAddress" :rows="3" :aria-invalid="hasValidationError('Current address is required')" />
+          <p v-if="hasValidationError('Current address is required')" class="text-sm text-red-600">Current address is required</p>
+        </div>
 
-      <div class="flex items-center gap-2">
-        <Checkbox id="consent" v-model:checked="consent" />
-        <Label for="consent">I agree that the information provided is correct.</Label>
-      </div>
-
-      <ul v-if="validationErrors.length > 0" class="space-y-1 rounded-md bg-red-50 p-3 text-sm text-red-700">
-        <li v-for="error in validationErrors" :key="error">{{ error }}</li>
-      </ul>
+        <div class="flex items-center gap-2">
+          <Checkbox id="consent" v-model:checked="consent" />
+          <Label for="consent">I agree that the information provided is correct. <span class="text-red-600">*</span></Label>
+        </div>
 
       <p v-if="apiError" class="rounded-md bg-red-50 p-3 text-sm text-red-700">{{ apiError }}</p>
 
