@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { statusClass, statusLabel } from '@/lib/applicationStatus'
 import { mockGetApplicationStatus, type ApplicationStatus } from '../services/applicationApi'
 
 const citizenId = ref('')
@@ -57,7 +59,7 @@ async function searchStatus() {
       <dl class="mt-4 space-y-2 text-sm">
         <div class="flex justify-between gap-4"><dt class="text-slate-500">ชื่อ</dt><dd>{{ status.fullName }}</dd></div>
         <div class="flex justify-between gap-4"><dt class="text-slate-500">เลขอ้างอิง</dt><dd>{{ status.referenceNumber }}</dd></div>
-        <div class="flex justify-between gap-4"><dt class="text-slate-500">สถานะ</dt><dd class="font-semibold capitalize">{{ status.status }}</dd></div>
+        <div class="flex justify-between gap-4"><dt class="text-slate-500">สถานะ</dt><dd><Badge :class="statusClass(status.status)">{{ statusLabel(status.status) }}</Badge></dd></div>
       </dl>
     </Card>
   </main>

@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import { statusClass, statusLabel } from '@/lib/applicationStatus'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { mockGetOfficerApplications, mockUpdateApplicationStatus, type OfficerApplication } from '../services/applicationApi'
@@ -83,7 +85,7 @@ onMounted(async () => {
             <TableCell>{{ application.fullName }}</TableCell>
             <TableCell>{{ application.citizenId }}</TableCell>
             <TableCell>{{ application.annualIncome.toLocaleString('th-TH') }}</TableCell>
-            <TableCell class="capitalize">{{ application.status }}</TableCell>
+            <TableCell><Badge :class="statusClass(application.status)">{{ statusLabel(application.status) }}</Badge></TableCell>
             <TableCell class="text-right"><Button size="sm" variant="outline" @click="openActionDialog(application)">ดำเนินการ</Button></TableCell>
           </TableRow>
           <TableRow v-if="filteredApplications.length === 0"><TableCell colspan="5" class="py-8 text-center">ไม่พบรายการ</TableCell></TableRow>
@@ -99,10 +101,32 @@ onMounted(async () => {
         </DialogHeader>
 
         <div class="space-y-3 py-4">
-          <div class="flex gap-2">
-            <Button :variant="selectedDecision === 'approved' ? 'default' : 'outline'" @click="selectedDecision = 'approved'">Approve</Button>
-            <Button :variant="selectedDecision === 'rejected' ? 'default' : 'outline'" @click="selectedDecision = 'rejected'">Reject</Button>
+          <p class="text-sm font-medium">เลือกการตัดสินใจ</p>
+          <div class="grid grid-cols-2 gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              :aria-pressed="selectedDecision === 'approved'"
+              :class="selectedDecision === 'approved'
+                ? 'border-green-600 bg-green-600 text-white hover:bg-green-700 hover:text-white'
+                : 'border-green-200 text-green-700 hover:bg-green-50'"
+              @click="selectedDecision = 'approved'"
+            >
+              Approve
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              :aria-pressed="selectedDecision === 'rejected'"
+              :class="selectedDecision === 'rejected'
+                ? 'border-red-600 bg-red-600 text-white hover:bg-red-700 hover:text-white'
+                : 'border-red-200 text-red-700 hover:bg-red-50'"
+              @click="selectedDecision = 'rejected'"
+            >
+              Reject
+            </Button>
           </div>
+          <p class="text-xs text-slate-500">เลือกแล้ว: {{ selectedDecision === 'approved' ? 'Approve' : 'Reject' }}</p>
           <Input v-model="reason" placeholder="เหตุผล (ถ้ามี)" />
         </div>
 
