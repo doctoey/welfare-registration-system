@@ -26,8 +26,10 @@ async function searchStatus() {
   try {
     const response = await mockGetApplicationStatus(citizenId.value.trim())
     status.value = response.data
-  } catch {
-    errorMessage.value = 'ไม่สามารถค้นหาสถานะได้ กรุณาลองใหม่อีกครั้ง'
+  } catch (error) {
+    errorMessage.value = error instanceof Error && error.message === 'APPLICATION_NOT_FOUND'
+      ? 'ไม่พบข้อมูลคำร้องของเลขบัตรประชาชนนี้'
+      : 'ไม่สามารถค้นหาสถานะได้ กรุณาลองใหม่อีกครั้ง'
   } finally {
     isSearching.value = false
   }

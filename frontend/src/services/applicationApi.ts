@@ -65,8 +65,13 @@ export function mockUpdateApplicationStatus(
 }
 
 export function mockGetApplicationStatus(citizenId: string) {
-  return new Promise<{ data: ApplicationStatus }>((resolve) => {
+  return new Promise<{ data: ApplicationStatus }>((resolve, reject) => {
     setTimeout(() => {
+      if (citizenId !== '1100400123458') {
+        reject(new Error('APPLICATION_NOT_FOUND'))
+        return
+      }
+
       resolve({
         data: {
           referenceNumber: 'WRS-2026-000001',
