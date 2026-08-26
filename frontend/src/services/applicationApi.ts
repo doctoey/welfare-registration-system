@@ -67,7 +67,7 @@ export function mockUpdateApplicationStatus(
 export function mockGetApplicationStatus(citizenId: string) {
   return new Promise<{ data: ApplicationStatus }>((resolve, reject) => {
     setTimeout(() => {
-      if (citizenId !== '1100400123458') {
+      if (citizenId !== '1100400123459') {
         reject(new Error('APPLICATION_NOT_FOUND'))
         return
       }

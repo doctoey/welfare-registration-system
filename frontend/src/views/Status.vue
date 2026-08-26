@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { statusClass, statusLabel } from '@/lib/applicationStatus'
+import { isValidThaiCitizenId } from '@/lib/thaiCitizenId'
 import { mockGetApplicationStatus, type ApplicationStatus } from '../services/applicationApi'
 
 const citizenId = ref('')
@@ -17,14 +18,15 @@ async function searchStatus() {
   errorMessage.value = ''
   status.value = null
 
-  if (citizenId.value.trim().length !== 13) {
-    errorMessage.value = 'National ID must contain 13 digits'
+  const citizenIdDigits = citizenId.value.replace(/\D/g, '')
+  if (!isValidThaiCitizenId(citizenIdDigits)) {
+    errorMessage.value = 'National ID is invalid'
     return
   }
 
   isSearching.value = true
   try {
-    const response = await mockGetApplicationStatus(citizenId.value.trim())
+    const response = await mockGetApplicationStatus(citizenIdDigits)
     status.value = response.data
   } catch (error) {
     errorMessage.value = error instanceof Error && error.message === 'APPLICATION_NOT_FOUND'

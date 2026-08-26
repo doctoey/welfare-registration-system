@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { isValidThaiCitizenId } from '@/lib/thaiCitizenId'
 import { Textarea } from '@/components/ui/textarea'
 import { mockCreateApplication } from '../services/applicationApi'
 
@@ -22,19 +23,6 @@ const referenceNumber = ref('')
 
 function hasValidationError(message: string) {
   return validationErrors.value.includes(message)
-}
-
-function isValidThaiCitizenId(value: string): boolean {
-  const digits = value.replace(/\D/g, '')
-  if (digits.length !== 13) return false
-
-  let sum = 0
-  for (let index = 0; index < 12; index += 1) {
-    sum += Number(digits[index]) * (13 - index)
-  }
-
-  const checkDigit = (11 - (sum % 11)) % 10
-  return checkDigit === Number(digits[12])
 }
 
 async function handleSubmit() {
