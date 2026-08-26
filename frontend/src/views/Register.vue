@@ -74,54 +74,49 @@ async function handleSubmit() {
 
 <template>
   <main>
-    <section v-if="submitted">
-      <h1>ส่งคำร้องสำเร็จ</h1>
-      <p>หมายเลขอ้างอิง: {{ referenceNumber }}</p>
+    <section v-if="submitted" class="mx-auto max-w-2xl rounded-xl border bg-white p-8 text-center shadow-sm">
+      <h1 class="text-2xl font-semibold">ส่งคำร้องสำเร็จ</h1>
+      <p class="mt-3 text-slate-600">หมายเลขอ้างอิง: {{ referenceNumber }}</p>
     </section>
 
-    <form v-else @submit.prevent="handleSubmit">
-      <label>
+    <form v-else class="mx-auto max-w-2xl space-y-5 rounded-xl border bg-white p-6 shadow-sm" @submit.prevent="handleSubmit">
+      <h1 class="text-2xl font-semibold">Welfare Registration System</h1>
+
+      <label class="block space-y-2 text-sm font-medium">
         National ID
         <Input v-model="citizenId" type="text" />
       </label>
 
-      <label>
+      <label class="block space-y-2 text-sm font-medium">
         Full name
         <Input v-model="fullName" type="text" />
       </label>
 
-      <label>
+      <label class="block space-y-2 text-sm font-medium">
         Date of birth
         <Input v-model="dateOfBirth" type="date" />
       </label>
 
-      <label>
+      <label class="block space-y-2 text-sm font-medium">
         Annual household income
         <Input v-model="annualIncome" type="number" min="0" />
       </label>
 
-      <label>
+      <label class="block space-y-2 text-sm font-medium">
         Current address
         <Textarea v-model="currentAddress" :rows="3" />
       </label>
 
-      <label>
+      <label class="flex items-center gap-2 text-sm">
         <Checkbox v-model:checked="consent" />
         I agree that the information provided is correct.
       </label>
 
-      <p>เลขบัตรที่กรอก: {{ citizenId }}</p>
-      <p>ชื่อ: {{ fullName }}</p>
-      <p>วันเกิด: {{ dateOfBirth }}</p>
-      <p>รายได้ต่อปี: {{ annualIncome }}</p>
-      <p>ที่อยู่: {{ currentAddress }}</p>
-      <p>ยินยอม: {{ consent }}</p>
-
-      <ul v-if="validationErrors.length > 0">
+      <ul v-if="validationErrors.length > 0" class="space-y-1 rounded-md bg-red-50 p-3 text-sm text-red-700">
         <li v-for="error in validationErrors" :key="error">{{ error }}</li>
       </ul>
 
-      <p v-if="apiError">{{ apiError }}</p>
+      <p v-if="apiError" class="rounded-md bg-red-50 p-3 text-sm text-red-700">{{ apiError }}</p>
 
       <Button type="submit" :disabled="isSubmitting">
         {{ isSubmitting ? 'กำลังส่ง...' : 'Submit' }}
