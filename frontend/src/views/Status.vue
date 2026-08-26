@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { statusClass, statusLabel } from '@/lib/applicationStatus'
 import { isValidThaiCitizenId } from '@/lib/thaiCitizenId'
-import { MOCK_CITIZEN_ID, mockGetApplicationStatus, type ApplicationStatus } from '../services/applicationApi'
+import { MOCK_CITIZEN_ID, mockGetApplicationStatus, type ApplicationStatus } from '@/services/statusApi'
 
 const citizenId = ref('')
 const status = ref<ApplicationStatus | null>(null)

@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { statusClass, statusLabel } from '@/lib/applicationStatus'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { mockGetOfficerApplications, mockUpdateApplicationStatus, type OfficerApplication } from '../services/applicationApi'
+import { mockGetOfficerApplications, mockUpdateApplicationStatus, type OfficerApplication } from '@/services/officerApi'
 
 const applications = ref<OfficerApplication[]>([])
 const selectedStatus = ref('all')
