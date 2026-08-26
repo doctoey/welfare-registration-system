@@ -2,18 +2,50 @@
 import { computed, onMounted, ref } from 'vue'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { mockGetOfficerApplications, type OfficerApplication } from '../services/applicationApi'
+import { mockGetOfficerApplications, mockUpdateApplicationStatus, type OfficerApplication } from '../services/applicationApi'
 
 const applications = ref<OfficerApplication[]>([])
 const selectedStatus = ref('all')
 const isLoading = ref(true)
+const isDialogOpen = ref(false)
+const selectedApplication = ref<OfficerApplication | null>(null)
+const selectedDecision = ref<'approved' | 'rejected'>('approved')
+const reason = ref('')
+const isUpdating = ref(false)
 
 const filteredApplications = computed(() => {
   if (selectedStatus.value === 'all') return applications.value
   return applications.value.filter((application) => application.status === selectedStatus.value)
 })
+
+function openActionDialog(application: OfficerApplication) {
+  selectedApplication.value = application
+  selectedDecision.value = 'approved'
+  reason.value = ''
+  isDialogOpen.value = true
+}
+
+async function updateStatus() {
+  if (!selectedApplication.value) return
+
+  isUpdating.value = true
+  const response = await mockUpdateApplicationStatus(
+    selectedApplication.value.id,
+    selectedDecision.value,
+    reason.value.trim(),
+  )
+  const application = applications.value.find((item) => item.id === selectedApplication.value?.id)
+  if (application) {
+    application.status = response.data.status
+    application.reason = response.data.reason
+  }
+  isUpdating.value = false
+  isDialogOpen.value = false
+}
 
 onMounted(async () => {
   const response = await mockGetOfficerApplications()
@@ -52,11 +84,32 @@ onMounted(async () => {
             <TableCell>{{ application.citizenId }}</TableCell>
             <TableCell>{{ application.annualIncome.toLocaleString('th-TH') }}</TableCell>
             <TableCell class="capitalize">{{ application.status }}</TableCell>
-            <TableCell class="text-right"><Button size="sm" variant="outline">ดูรายละเอียด</Button></TableCell>
+            <TableCell class="text-right"><Button size="sm" variant="outline" @click="openActionDialog(application)">ดำเนินการ</Button></TableCell>
           </TableRow>
           <TableRow v-if="filteredApplications.length === 0"><TableCell colspan="5" class="py-8 text-center">ไม่พบรายการ</TableCell></TableRow>
         </TableBody>
       </Table>
     </Card>
+
+    <Dialog v-model:open="isDialogOpen">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>ดำเนินการคำร้อง</DialogTitle>
+          <DialogDescription v-if="selectedApplication">{{ selectedApplication.fullName }} ({{ selectedApplication.citizenId }})</DialogDescription>
+        </DialogHeader>
+
+        <div class="space-y-3 py-4">
+          <div class="flex gap-2">
+            <Button :variant="selectedDecision === 'approved' ? 'default' : 'outline'" @click="selectedDecision = 'approved'">Approve</Button>
+            <Button :variant="selectedDecision === 'rejected' ? 'default' : 'outline'" @click="selectedDecision = 'rejected'">Reject</Button>
+          </div>
+          <Input v-model="reason" placeholder="เหตุผล (ถ้ามี)" />
+        </div>
+
+        <DialogFooter>
+          <Button :disabled="isUpdating" @click="updateStatus">{{ isUpdating ? 'กำลังบันทึก...' : 'บันทึกสถานะ' }}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   </main>
 </template>

@@ -26,6 +26,7 @@ export interface OfficerApplication {
   fullName: string
   annualIncome: number
   status: 'pending' | 'approved' | 'rejected'
+  reason?: string
 }
 
 export function mockGetOfficerApplications() {
@@ -37,6 +38,27 @@ export function mockGetOfficerApplications() {
           { id: 2, citizenId: '1101700205671', fullName: 'สมหญิง รักดี', annualIncome: 72000, status: 'approved' },
           { id: 3, citizenId: '1102500337896', fullName: 'วิชัย ตั้งใจ', annualIncome: 38000, status: 'rejected' },
         ],
+      })
+    }, 500)
+  })
+}
+
+export function mockUpdateApplicationStatus(
+  id: number,
+  status: OfficerApplication['status'],
+  reason: string,
+) {
+  return new Promise<{ data: OfficerApplication }>((resolve) => {
+    setTimeout(() => {
+      resolve({
+        data: {
+          id,
+          citizenId: '',
+          fullName: '',
+          annualIncome: 0,
+          status,
+          reason,
+        },
       })
     }, 500)
   })
