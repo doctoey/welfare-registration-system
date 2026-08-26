@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { mockCreateApplication } from '../services/applicationApi'
 
 const citizenId = ref('')
 const fullName = ref('')
@@ -8,6 +9,10 @@ const annualIncome = ref('')
 const currentAddress = ref('')
 const consent = ref(false)
 const validationErrors = ref<string[]>([])
+const isSubmitting = ref(false)
+const apiError = ref('')
+const submitted = ref(false)
+const referenceNumber = ref('')
 
 function isValidThaiCitizenId(value: string): boolean {
   const digits = value.replace(/\D/g, '')
@@ -22,8 +27,9 @@ function isValidThaiCitizenId(value: string): boolean {
   return checkDigit === Number(digits[12])
 }
 
-function handleSubmit() {
+async function handleSubmit() {
   validationErrors.value = []
+  apiError.value = ''
 
   const citizenIdDigits = citizenId.value.replace(/\D/g, '')
   if (!isValidThaiCitizenId(citizenIdDigits)) {
@@ -47,15 +53,29 @@ function handleSubmit() {
     currentAddress: currentAddress.value.trim(),
   }
 
-  console.log('Application payload:', payload)
+  isSubmitting.value = true
+
+  try {
+    const response = await mockCreateApplication(payload)
+    referenceNumber.value = response.data.referenceNumber
+    submitted.value = true
+  } catch (error) {
+    console.error(error)
+    apiError.value = 'ไม่สามารถส่งคำร้องได้ กรุณาลองใหม่อีกครั้ง'
+  } finally {
+    isSubmitting.value = false
+  }
 }
 </script>
 
 <template>
   <main>
-    <h1>Welfare Registration System</h1>
+    <section v-if="submitted">
+      <h1>ส่งคำร้องสำเร็จ</h1>
+      <p>หมายเลขอ้างอิง: {{ referenceNumber }}</p>
+    </section>
 
-    <form @submit.prevent="handleSubmit">
+    <form v-else @submit.prevent="handleSubmit">
       <label>
         National ID
         <input v-model="citizenId" type="text" />
@@ -97,8 +117,10 @@ function handleSubmit() {
         <li v-for="error in validationErrors" :key="error">{{ error }}</li>
       </ul>
 
-      <button type="submit">
-        Submit
+      <p v-if="apiError">{{ apiError }}</p>
+
+      <button type="submit" :disabled="isSubmitting">
+        {{ isSubmitting ? 'กำลังส่ง...' : 'Submit' }}
       </button>
     </form>
   </main>
