@@ -38,7 +38,7 @@ function resetForm() {
 }
 
 function updateCitizenId(event: Event) {
-  citizenId.value = (event.target as HTMLInputElement).value.replace(/\D/g, '')
+  citizenId.value = (event.target as HTMLInputElement).value.replace(/\D/g, '').slice(0, 13)
 }
 
 async function handleSubmit() {
@@ -99,7 +99,7 @@ async function handleSubmit() {
 
         <div class="space-y-2">
           <Label for="citizen-id">National ID <span class="text-red-600">*</span></Label>
-          <Input id="citizen-id" v-model="citizenId" type="text" :aria-invalid="hasValidationError('National ID is invalid')" @input="updateCitizenId" />
+          <Input id="citizen-id" v-model="citizenId" type="text" inputmode="numeric" maxlength="13" :aria-invalid="hasValidationError('National ID is invalid')" @input="updateCitizenId" />
           <p class="text-xs text-slate-500">Mock test ID: 1100400123450</p>
           <p v-if="hasValidationError('National ID is invalid')" class="text-sm text-red-600">National ID must be valid 13-digit Thai ID</p>
         </div>
