@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"net/http"
 )
 
@@ -75,9 +76,35 @@ func handleGetStatus(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "APPLICATION_NOT_FOUND", http.StatusNotFound)
 }
 
+func handleCreateApplication(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	var req Application
+	json.NewDecoder(r.Body).Decode(&req)
+
+	for _, app := range applications {
+		if app.CitizenID == req.CitizenID {
+			http.Error(w, "CITIZEN_ALREADY_REGISTERED", http.StatusConflict)
+			return
+		}
+	}
+
+	refNumber := fmt.Sprintf("WRS-2026-%06d", rand.Intn(900000)+100000)
+	req.ID = len(applications) + 1
+	req.ReferenceNumber = refNumber
+	req.Status = "pending"
+
+	applications = append([]Application{req}, applications...)
+
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(map[string]string{"referenceNumber": refNumber})
+}
+
 func main() {
 	http.HandleFunc("GET /api/v1/officer/applications", handleGetOfficer)
 	http.HandleFunc("GET /api/v1/applications/status/{citizenId}", handleGetStatus)
+	http.HandleFunc("POST /api/v1/applications", handleCreateApplication)
 
 	fmt.Println("port run at : http://localhost:8080")
 	http.ListenAndServe(":8080", nil)
