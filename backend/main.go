@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 )
@@ -51,7 +52,16 @@ var applications = []Application{
 	},
 }
 
+func handleGetOfficer(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	json.NewEncoder(w).Encode(applications)
+}
+
 func main() {
+	http.HandleFunc("GET /api/v1/officer/applications", handleGetOfficer)
+
 	fmt.Println("port run at : http://localhost:8080")
 	http.ListenAndServe(":8080", nil)
 }
