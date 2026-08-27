@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
+	"strconv"
 )
 
 type Application struct {
@@ -101,10 +102,36 @@ func handleCreateApplication(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"referenceNumber": refNumber})
 }
 
+func handleUpdateStatus(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	id, _ := strconv.Atoi(r.PathValue("id"))
+
+	var body struct {
+		Status string `json:"status"`
+		Reason string `json:"reason"`
+	}
+	json.NewDecoder(r.Body).Decode(&body)
+
+	for i, app := range applications {
+		if app.ID == id {
+			applications[i].Status = body.Status
+			applications[i].Reason = body.Reason
+
+			json.NewEncoder(w).Encode(applications[i])
+			return
+		}
+	}
+
+	http.Error(w, "APPLICATION_NOT_FOUND", http.StatusNotFound)
+}
+
 func main() {
 	http.HandleFunc("GET /api/v1/officer/applications", handleGetOfficer)
 	http.HandleFunc("GET /api/v1/applications/status/{citizenId}", handleGetStatus)
 	http.HandleFunc("POST /api/v1/applications", handleCreateApplication)
+	http.HandleFunc("PATCH /api/v1/officer/applications/{id}/status", handleUpdateStatus)
 
 	fmt.Println("port run at : http://localhost:8080")
 	http.ListenAndServe(":8080", nil)
