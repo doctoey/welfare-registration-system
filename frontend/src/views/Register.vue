@@ -32,7 +32,23 @@ const isSubmitting = ref(false)
 const apiError = ref('')
 const submitted = ref(false)
 const referenceNumber = ref('')
-const isCopied = ref(false)
+const copiedRef = ref(false)
+const copiedId = ref(false)
+
+async function copyText(text: string, type: 'ref' | 'id') {
+  try {
+    await navigator.clipboard.writeText(text)
+    if (type === 'ref') {
+      copiedRef.value = true
+      setTimeout(() => (copiedRef.value = false), 2000)
+    } else {
+      copiedId.value = true
+      setTimeout(() => (copiedId.value = false), 2000)
+    }
+  } catch (err) {
+    console.error('Failed to copy', err)
+  }
+}
 
 function formatThaiCitizenId(raw: string): string {
   const digits = raw.replace(/\D/g, '').slice(0, 13)
@@ -100,20 +116,8 @@ function resetForm() {
   apiError.value = ''
   referenceNumber.value = ''
   submitted.value = false
-  isCopied.value = false
-}
-
-async function copyReference() {
-  if (!referenceNumber.value) return
-  try {
-    await navigator.clipboard.writeText(referenceNumber.value)
-    isCopied.value = true
-    setTimeout(() => {
-      isCopied.value = false
-    }, 2000)
-  } catch (e) {
-    console.error('Failed to copy', e)
-  }
+  copiedRef.value = false
+  copiedId.value = false
 }
 
 async function handleSubmit() {
@@ -180,20 +184,33 @@ async function handleSubmit() {
         ระบบได้รับข้อมูลคำร้องสวัสดิการของท่านเรียบร้อยแล้ว ข้อมูลถูกบันทึกและพร้อมสำหรับเจ้าหน้าที่พิจารณา
       </p>
 
-      <!-- Reference Number Box with Copy Action -->
-      <div
-        class="mt-6 inline-flex flex-col items-center justify-center rounded-xl bg-slate-50 p-4 border border-slate-200 shadow-2xs">
-        <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider block">หมายเลขอ้างอิง (Reference
-          Number)</span>
-        <div class="mt-1 flex items-center gap-3">
-          <span class="font-mono text-2xl font-bold text-blue-700 tracking-wide">{{ referenceNumber }}</span>
-          <button type="button"
-            class="flex items-center gap-1 rounded-md bg-white px-2.5 py-1 text-xs font-medium text-slate-700 border border-slate-200 hover:bg-slate-100 shadow-2xs transition"
-            @click="copyReference">
-            <component :is="isCopied ? Check : Copy" class="h-3.5 w-3.5"
-              :class="isCopied ? 'text-emerald-600' : 'text-slate-500'" />
-            <span>{{ isCopied ? 'คัดลอกแล้ว' : 'คัดลอก' }}</span>
-          </button>
+      <div class="mt-6 mx-auto max-w-md grid grid-cols-1 sm:grid-cols-2 gap-3 text-left">
+        <div class="rounded-xl bg-slate-50 p-3.5 border border-slate-200">
+          <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">หมายเลขอ้างอิง</span>
+          <div class="mt-1 flex items-center justify-between gap-1">
+            <span class="font-mono text-sm font-bold text-blue-700">{{ referenceNumber }}</span>
+            <button type="button"
+              class="flex items-center gap-1 rounded bg-white px-2 py-0.5 text-xs font-medium text-slate-700 border border-slate-200 hover:bg-slate-100 transition cursor-pointer"
+              @click="copyText(referenceNumber, 'ref')">
+              <component :is="copiedRef ? Check : Copy" class="h-3 w-3"
+                :class="copiedRef ? 'text-emerald-600' : 'text-slate-500'" />
+              <span>{{ copiedRef ? 'คัดลอกแล้ว' : 'คัดลอก' }}</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="rounded-xl bg-slate-50 p-3.5 border border-slate-200">
+          <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">เลขประจำตัวประชาชน</span>
+          <div class="mt-1 flex items-center justify-between gap-1">
+            <span class="font-mono text-sm font-bold text-slate-800">{{ formatThaiCitizenId(citizenId) }}</span>
+            <button type="button"
+              class="flex items-center gap-1 rounded bg-white px-2 py-0.5 text-xs font-medium text-slate-700 border border-slate-200 hover:bg-slate-100 transition cursor-pointer"
+              @click="copyText(citizenId, 'id')">
+              <component :is="copiedId ? Check : Copy" class="h-3 w-3"
+                :class="copiedId ? 'text-emerald-600' : 'text-slate-500'" />
+              <span>{{ copiedId ? 'คัดลอกแล้ว' : 'คัดลอก' }}</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -201,17 +218,15 @@ async function handleSubmit() {
         <Button variant="outline" @click="resetForm">
           ยื่นคำร้องใหม่อีกครั้ง
         </Button>
-        <RouterLink to="/status">
+        <RouterLink :to="{ path: '/status', query: { id: citizenId, dob: dateOfBirth } }">
           <Button class="bg-blue-600 hover:bg-blue-700 text-white">
-            ไปหน้าตรวจสอบสถานะ
+            🔍 ตรวจสอบสถานะคำร้องนี้ทันที
           </Button>
         </RouterLink>
       </div>
     </Card>
 
-    <!-- Form State -->
     <Card v-else class="mx-auto max-w-3xl overflow-hidden bg-white shadow-sm border-slate-200">
-      <!-- Header Banner -->
       <div class="border-b border-slate-100 bg-slate-50/70 p-6 flex flex-wrap items-center justify-between gap-4">
         <div class="flex items-center gap-3">
           <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm">
@@ -223,7 +238,6 @@ async function handleSubmit() {
           </div>
         </div>
 
-        <!-- Quick Sample Fill Buttons for various test cases -->
         <div class="flex flex-wrap items-center gap-2">
           <span class="text-xs text-slate-400">ทดสอบเคส:</span>
           <button type="button"
@@ -241,7 +255,6 @@ async function handleSubmit() {
         </div>
       </div>
 
-      <!-- Notice Bar -->
       <div class="border-b border-amber-200 bg-amber-50 px-6 py-3 flex items-start gap-2.5">
         <AlertCircle class="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
         <p class="text-xs text-amber-800 leading-relaxed">
@@ -251,7 +264,6 @@ async function handleSubmit() {
       </div>
 
       <div class="p-6 sm:p-8 space-y-8">
-        <!-- Section 1: Personal Information -->
         <section class="space-y-4">
           <div class="flex items-center gap-2 border-b border-slate-100 pb-2">
             <div
@@ -265,7 +277,6 @@ async function handleSubmit() {
           </div>
 
           <div class="space-y-4">
-            <!-- National ID with Auto-formatting and Live Checksum Indicator -->
             <div class="space-y-1.5">
               <Label for="citizen-id" class="text-sm font-medium text-slate-700">
                 เลขประจำตัวประชาชน (National ID) <span class="text-red-600">*</span>
@@ -274,7 +285,6 @@ async function handleSubmit() {
                 <Input id="citizen-id" v-model="formattedCitizenId" type="text" inputmode="numeric" maxlength="17"
                   placeholder="X-XXXX-XXXXX-XX-X" :aria-invalid="hasValidationError('National ID is invalid')"
                   class="font-mono text-base tracking-wider pr-10" />
-                <!-- Live indicator / Clear button -->
                 <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
                   <CheckCircle2 v-if="idStatus === 'valid'" class="h-5 w-5 text-emerald-500 pointer-events-none" />
                   <button v-else-if="idStatus === 'invalid'" type="button"
@@ -297,13 +307,12 @@ async function handleSubmit() {
               </p>
             </div>
 
-            <!-- Full Name & Date of Birth (Grid) -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div class="space-y-1.5">
                 <Label for="full-name" class="text-sm font-medium text-slate-700">
                   ชื่อ - นามสกุล (Full Name) <span class="text-red-600">*</span>
                 </Label>
-                <Input id="full-name" v-model="fullName" placeholder="เช่น นายสมชาย ใจดี"
+                <Input id="full-name" v-model="fullName" placeholder="เช่น สมชาย ใจดี"
                   :aria-invalid="hasValidationError('Full name is required')" />
                 <p v-if="hasValidationError('Full name is required')"
                   class="text-xs text-red-600 flex items-center gap-1">
@@ -328,7 +337,6 @@ async function handleSubmit() {
           </div>
         </section>
 
-        <!-- Section 2: Financial & Address -->
         <section class="space-y-4">
           <div class="flex items-center gap-2 border-b border-slate-100 pb-2">
             <div
@@ -342,7 +350,6 @@ async function handleSubmit() {
           </div>
 
           <div class="space-y-4">
-            <!-- Annual Income with Commas -->
             <div class="space-y-1.5">
               <Label for="annual-income" class="text-sm font-medium text-slate-700">
                 รายได้รวมครัวเรือนต่อปี (Annual Household Income) <span class="text-red-600">*</span>
@@ -364,7 +371,6 @@ async function handleSubmit() {
               </p>
             </div>
 
-            <!-- Current Address -->
             <div class="space-y-1.5">
               <Label for="current-address" class="text-sm font-medium text-slate-700">
                 ที่อยู่ปัจจุบัน (Current Address) <span class="text-red-600">*</span>
@@ -381,7 +387,6 @@ async function handleSubmit() {
           </div>
         </section>
 
-        <!-- Section 3: Consent & Declaration -->
         <section class="space-y-4">
           <div class="flex items-center gap-2 border-b border-slate-100 pb-2">
             <div
@@ -412,14 +417,12 @@ async function handleSubmit() {
           </p>
         </section>
 
-        <!-- Error Message -->
         <div v-if="apiError"
           class="rounded-lg bg-red-50 border border-red-200 p-4 text-sm text-red-700 flex items-center gap-2">
           <AlertCircle class="h-5 w-5 shrink-0 text-red-600" />
           <span>{{ apiError }}</span>
         </div>
 
-        <!-- Submit Button -->
         <div class="pt-2">
           <Button type="button" :disabled="isSubmitting"
             class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 font-medium shadow-sm transition-all"

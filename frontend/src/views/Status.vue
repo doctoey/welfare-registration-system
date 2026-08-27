@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -15,10 +16,16 @@ import {
   XCircle,
   ShieldCheck,
   Sparkles,
+  Lock,
 } from 'lucide-vue-next'
 import { getApplicationStatus, type ApplicationStatus } from '@/services/statusApi'
 
+const route = useRoute()
+
 const citizenId = ref('')
+const verifyType = ref<'dob' | 'ref'>('dob')
+const birthDate = ref('')
+const referenceNumber = ref('')
 const status = ref<ApplicationStatus | null>(null)
 const errorMessage = ref('')
 const isSearching = ref(false)
@@ -42,8 +49,10 @@ const formattedCitizenId = computed({
   },
 })
 
-function fillMockId(id: string) {
+function fillMockId(id: string, dob: string) {
   citizenId.value = id
+  birthDate.value = dob
+  verifyType.value = 'dob'
   errorMessage.value = ''
   status.value = null
 }
@@ -54,7 +63,7 @@ async function searchStatus() {
 
   const citizenIdDigits = citizenId.value.replace(/\D/g, '')
   if (!citizenIdDigits) {
-    errorMessage.value = 'กรุณาระบุเลขประจำตัวประชาชน'
+    errorMessage.value = 'กรุณาระบุเลขประจำตัวประชาชน 13 หลัก'
     return
   }
 
@@ -63,13 +72,29 @@ async function searchStatus() {
     return
   }
 
+  if (verifyType.value === 'dob' && !birthDate.value) {
+    errorMessage.value = 'กรุณาระบุวันเดือนปีเกิดเพื่อยืนยันตัวตน'
+    return
+  }
+
+  if (verifyType.value === 'ref' && !referenceNumber.value.trim()) {
+    errorMessage.value = 'กรุณาระบุหมายเลขอ้างอิงคำร้อง'
+    return
+  }
+
   isSearching.value = true
   try {
-    const response = await getApplicationStatus(citizenIdDigits)
+    const params =
+      verifyType.value === 'dob'
+        ? { birthDate: birthDate.value }
+        : { ref: referenceNumber.value.trim() }
+
+    const response = await getApplicationStatus(citizenIdDigits, params)
     status.value = response.data
   } catch (error: any) {
     if (error.response?.status === 404) {
-      errorMessage.value = 'ไม่พบข้อมูลคำร้องของเลขบัตรประชาชนนี้ในระบบ กรุณาตรวจสอบเลขบัตรหรือยื่นคำร้องใหม่'
+      errorMessage.value =
+        'ไม่พบข้อมูลคำร้องที่ตรงกับเลขบัตรประชาชนและข้อมูลยืนยันตัวตน กรุณาตรวจสอบความถูกต้องอีกครั้ง'
     } else {
       errorMessage.value = 'ไม่สามารถค้นหาสถานะได้ กรุณาลองใหม่อีกครั้ง'
     }
@@ -77,13 +102,22 @@ async function searchStatus() {
     isSearching.value = false
   }
 }
+
+onMounted(() => {
+  const queryId = route.query.id as string
+  const queryDob = route.query.dob as string
+  if (queryId && queryDob) {
+    citizenId.value = queryId
+    birthDate.value = queryDob
+    verifyType.value = 'dob'
+    searchStatus()
+  }
+})
 </script>
 
 <template>
   <main class="py-6 px-4 sm:px-6 space-y-6">
-    <!-- Search Form Card -->
     <Card class="mx-auto max-w-3xl overflow-hidden bg-white shadow-sm border-slate-200">
-      <!-- Header Banner -->
       <div class="border-b border-slate-100 bg-slate-50/70 p-6">
         <div class="flex items-center gap-3">
           <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm">
@@ -91,16 +125,23 @@ async function searchStatus() {
           </div>
           <div>
             <h1 class="text-xl font-bold text-slate-800">ติดตามสถานะคำร้องสวัสดิการ</h1>
-            <p class="text-xs sm:text-sm text-slate-500">Track Welfare Application Status</p>
+            <p class="text-xs sm:text-sm text-slate-500">Track Welfare Application Status (PDPA Secured)</p>
           </div>
         </div>
       </div>
 
       <div class="p-6 sm:p-8 space-y-6">
+        <div class="rounded-lg bg-blue-50/60 border border-blue-100 p-3.5 flex items-start gap-2.5 text-xs text-blue-900">
+          <Lock class="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
+          <p class="leading-relaxed">
+            <span class="font-semibold">ระบบความปลอดภัยข้อมูลส่วนบุคคล:</span> กรุณาระบุเลขประจำตัวประชาชนพร้อมข้อมูลยืนยันตัวตน (วันเกิด หรือหมายเลขอ้างอิง) เพื่อปกป้องข้อมูลส่วนบุคคลของท่าน
+          </p>
+        </div>
+
         <form class="space-y-4" @submit.prevent="searchStatus">
           <div class="space-y-2">
             <Label for="status-citizen-id" class="text-sm font-medium text-slate-700">
-              เลขประจำตัวประชาชน (National ID) <span class="text-red-600">*</span>
+              1. เลขประจำตัวประชาชน (National ID) <span class="text-red-600">*</span>
             </Label>
             <div class="relative">
               <Input
@@ -126,40 +167,90 @@ async function searchStatus() {
                 class="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none"
               />
             </div>
+          </div>
 
-            <!-- Quick Selection Mock Chips -->
-            <div class="rounded-lg bg-slate-50 p-3 border border-slate-100 text-xs text-slate-600 space-y-1.5">
-              <span class="font-semibold text-slate-700 flex items-center gap-1">
-                <Sparkles class="h-3.5 w-3.5 text-blue-600" />
-                คลิกเลือกเลขตัวอย่างในระบบเพื่อทดสอบค้นหา:
-              </span>
-              <div class="flex flex-wrap gap-2 pt-1">
+          <div class="space-y-2 pt-1">
+            <div class="flex items-center justify-between">
+              <Label class="text-sm font-medium text-slate-700">
+                2. ข้อมูลยืนยันตัวตน <span class="text-red-600">*</span>
+              </Label>
+              <div class="flex gap-2 text-xs">
                 <button
                   type="button"
-                  class="rounded bg-amber-50 px-2 py-1 text-amber-700 border border-amber-200 hover:bg-amber-100 transition shadow-2xs font-mono"
-                  @click="fillMockId('1100400123450')"
+                  :class="[
+                    'px-2 py-0.5 rounded cursor-pointer transition',
+                    verifyType === 'dob' ? 'bg-blue-100 text-blue-700 font-semibold' : 'text-slate-500 hover:text-slate-800'
+                  ]"
+                  @click="verifyType = 'dob'"
                 >
-                  1-1004-00123-45-0 (รอตรวจสอบ)
+                  ใช้วันเกิด
                 </button>
+                <span class="text-slate-300">|</span>
                 <button
                   type="button"
-                  class="rounded bg-emerald-50 px-2 py-1 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition shadow-2xs font-mono"
-                  @click="fillMockId('1101700205673')"
+                  :class="[
+                    'px-2 py-0.5 rounded cursor-pointer transition',
+                    verifyType === 'ref' ? 'bg-blue-100 text-blue-700 font-semibold' : 'text-slate-500 hover:text-slate-800'
+                  ]"
+                  @click="verifyType = 'ref'"
                 >
-                  1-1017-00205-67-3 (อนุมัติแล้ว)
-                </button>
-                <button
-                  type="button"
-                  class="rounded bg-rose-50 px-2 py-1 text-rose-700 border border-rose-200 hover:bg-rose-100 transition shadow-2xs font-mono"
-                  @click="fillMockId('1102500337895')"
-                >
-                  1-1025-00337-89-5 (ไม่อนุมัติ)
+                  ใช้หมายเลขอ้างอิง
                 </button>
               </div>
             </div>
+
+            <div v-if="verifyType === 'dob'">
+              <Input
+                id="status-dob"
+                v-model="birthDate"
+                type="date"
+                class="w-full"
+              />
+              <p class="text-[11px] text-slate-400 mt-1">ระบุวันเดือนปีเกิดที่ตรงกับตอนลงทะเบียน</p>
+            </div>
+
+            <div v-else>
+              <Input
+                id="status-ref"
+                v-model="referenceNumber"
+                type="text"
+                placeholder="เช่น WRS-2026-000001"
+                class="font-mono text-sm uppercase"
+              />
+              <p class="text-[11px] text-slate-400 mt-1">ระบุหมายเลขอ้างอิงที่ได้รับหลังส่งคำร้อง</p>
+            </div>
           </div>
 
-          <!-- Error Alert -->
+          <div class="rounded-lg bg-slate-50 p-3 border border-slate-100 text-xs text-slate-600 space-y-1.5">
+            <span class="font-semibold text-slate-700 flex items-center gap-1">
+              <Sparkles class="h-3.5 w-3.5 text-blue-600" />
+              คลิกตัวอย่างในระบบเพื่อทดสอบค้นหาทันที:
+            </span>
+            <div class="flex flex-wrap gap-2 pt-1">
+              <button
+                type="button"
+                class="rounded bg-amber-50 px-2 py-1 text-amber-700 border border-amber-200 hover:bg-amber-100 transition shadow-2xs font-mono"
+                @click="fillMockId('1100400123450', '1990-05-12')"
+              >
+                สมชาย (รอตรวจสอบ)
+              </button>
+              <button
+                type="button"
+                class="rounded bg-emerald-50 px-2 py-1 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition shadow-2xs font-mono"
+                @click="fillMockId('1101700205673', '1988-11-20')"
+              >
+                สมหญิง (อนุมัติแล้ว)
+              </button>
+              <button
+                type="button"
+                class="rounded bg-rose-50 px-2 py-1 text-rose-700 border border-rose-200 hover:bg-rose-100 transition shadow-2xs font-mono"
+                @click="fillMockId('1102500337895', '1985-02-14')"
+              >
+                วิชัย (ไม่อนุมัติ)
+              </button>
+            </div>
+          </div>
+
           <div
             v-if="errorMessage"
             class="rounded-lg bg-red-50 border border-red-200 p-4 text-sm text-red-700 flex items-center gap-2"
@@ -182,7 +273,7 @@ async function searchStatus() {
                   d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                 ></path>
               </svg>
-              กำลังค้นหา...
+              กำลังตรวจสอบข้อมูล...
             </span>
             <span v-else class="flex items-center justify-center gap-2">
               <Search class="h-4 w-4" />
@@ -193,7 +284,6 @@ async function searchStatus() {
       </div>
     </Card>
 
-    <!-- Search Result Card with Timeline Step Progress -->
     <Card v-if="status" class="mx-auto max-w-3xl overflow-hidden bg-white shadow-sm border-slate-200">
       <div class="border-b border-slate-100 bg-slate-50/70 px-6 py-4 flex items-center justify-between">
         <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
@@ -206,10 +296,8 @@ async function searchStatus() {
       </div>
 
       <div class="p-6 sm:p-8 space-y-6">
-        <!-- Progress Stepper (Timeline) -->
         <div class="relative py-2">
           <div class="flex items-center justify-between">
-            <!-- Step 1 -->
             <div class="flex flex-col items-center flex-1">
               <div
                 class="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-600 text-white text-xs font-bold shadow-2xs"
@@ -222,7 +310,6 @@ async function searchStatus() {
 
             <div class="h-0.5 flex-1 bg-emerald-500 mx-2"></div>
 
-            <!-- Step 2 -->
             <div class="flex flex-col items-center flex-1">
               <div
                 class="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold shadow-2xs"
@@ -255,7 +342,6 @@ async function searchStatus() {
               "
             ></div>
 
-            <!-- Step 3 -->
             <div class="flex flex-col items-center flex-1">
               <div
                 class="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold shadow-2xs"
@@ -288,7 +374,6 @@ async function searchStatus() {
           </div>
         </div>
 
-        <!-- Status Specific Banner -->
         <div
           v-if="status.status === 'approved'"
           class="rounded-xl border border-emerald-200 bg-emerald-50/70 p-4 flex items-start gap-3"
@@ -321,15 +406,14 @@ async function searchStatus() {
           </div>
         </div>
 
-        <!-- Details List -->
         <div class="rounded-xl border border-slate-200 bg-slate-50/50 p-4 divide-y divide-slate-100">
           <div class="py-2.5 flex justify-between items-center text-sm">
-            <span class="text-slate-500 font-medium">ชื่อ-นามสกุล</span>
+            <span class="text-slate-500 font-medium">ชื่อ-นามสกุล (ข้อมูลที่ถูกคุ้มครอง)</span>
             <span class="font-semibold text-slate-800">{{ status.fullName }}</span>
           </div>
           <div class="py-2.5 flex justify-between items-center text-sm">
             <span class="text-slate-500 font-medium">เลขประจำตัวประชาชน</span>
-            <span class="font-mono text-slate-800">{{ formatThaiCitizenId(status.citizenId) }}</span>
+            <span class="font-mono text-slate-800">{{ status.citizenId }}</span>
           </div>
           <div class="py-2.5 flex justify-between items-center text-sm">
             <span class="text-slate-500 font-medium">หมายเลขอ้างอิง</span>

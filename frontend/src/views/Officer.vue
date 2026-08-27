@@ -139,7 +139,6 @@ onMounted(() => {
 
 <template>
   <main class="py-6 px-4 sm:px-6 space-y-6">
-    <!-- Stat Cards Overview -->
     <div class="mx-auto max-w-5xl grid grid-cols-2 sm:grid-cols-4 gap-4">
       <Card class="p-4 bg-white shadow-sm border-slate-200">
         <div class="flex items-center gap-3">
@@ -190,9 +189,7 @@ onMounted(() => {
       </Card>
     </div>
 
-    <!-- Main Table Card -->
     <Card class="mx-auto max-w-5xl overflow-hidden bg-white shadow-sm border-slate-200">
-      <!-- Header Banner -->
       <div class="border-b border-slate-100 bg-slate-50/70 p-6 flex flex-wrap items-center justify-between gap-4">
         <div class="flex items-center gap-3">
           <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm">
@@ -204,7 +201,6 @@ onMounted(() => {
           </div>
         </div>
 
-        <!-- Actions and Filters -->
         <div class="flex flex-wrap items-center gap-2">
           <Button variant="outline" size="sm" class="h-9 px-2.5 text-xs text-slate-600" @click="loadData">
             <RefreshCw class="h-3.5 w-3.5 mr-1" />
@@ -232,7 +228,6 @@ onMounted(() => {
         </div>
       </div>
 
-      <!-- Table Content -->
       <div class="p-6">
         <div v-if="isLoading" class="py-12 text-center text-sm text-slate-500 flex flex-col items-center gap-2">
           <svg class="animate-spin h-6 w-6 text-blue-600" viewBox="0 0 24 24" fill="none">
@@ -294,7 +289,6 @@ onMounted(() => {
       </div>
     </Card>
 
-    <!-- Detail Modal -->
     <Dialog v-model:open="isDetailModalOpen">
       <DialogContent class="sm:max-w-lg">
         <DialogHeader>
@@ -351,7 +345,6 @@ onMounted(() => {
       </DialogContent>
     </Dialog>
 
-    <!-- Review Dialog Modal -->
     <Dialog v-model:open="isActionDialogOpen">
       <DialogContent class="sm:max-w-md">
         <DialogHeader>
@@ -363,13 +356,11 @@ onMounted(() => {
         </DialogHeader>
 
         <div class="space-y-4 py-2">
-          <!-- Summary Box -->
           <dl v-if="selectedApplication" class="space-y-2 rounded-lg bg-slate-50 p-3.5 text-xs sm:text-sm border border-slate-100">
             <div class="flex justify-between gap-4"><dt class="text-slate-500">รายได้รวมครัวเรือน/ปี</dt><dd class="font-semibold text-slate-800">{{ selectedApplication.annualIncome.toLocaleString('th-TH') }} บาท</dd></div>
             <div class="flex justify-between gap-4"><dt class="text-slate-500">สถานะปัจจุบัน</dt><dd><Badge :class="statusClass(selectedApplication.status)">{{ statusLabel(selectedApplication.status) }}</Badge></dd></div>
           </dl>
 
-          <!-- Decision Toggle -->
           <div class="space-y-2">
             <Label class="text-xs font-semibold text-slate-700 uppercase tracking-wider">ผลการพิจารณา <span class="text-red-600">*</span></Label>
             <div class="grid grid-cols-2 gap-3">
@@ -398,7 +389,6 @@ onMounted(() => {
             </div>
           </div>
 
-          <!-- Reason Input -->
           <div class="space-y-1.5">
             <Label for="review-reason" class="text-xs font-semibold text-slate-700">
               {{ selectedDecision === 'rejected' ? 'ระบุเหตุผลที่ไม่อนุมัติ (จำเป็น)' : 'บันทึกเพิ่มเติม (ไม่บังคับ)' }}
@@ -411,7 +401,6 @@ onMounted(() => {
             />
           </div>
 
-          <!-- Error in Dialog -->
           <div v-if="actionError" class="rounded-md bg-red-50 p-2.5 text-xs text-red-700 flex items-center gap-1.5 border border-red-200">
             <AlertCircle class="h-4 w-4 shrink-0 text-red-600" />
             <span>{{ actionError }}</span>

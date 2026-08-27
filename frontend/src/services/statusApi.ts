@@ -33,6 +33,11 @@ export function mockGetApplicationStatus(citizenId: string) {
   })
 }
 
-export function getApplicationStatus(citizenId: string) {
-  return axios.get<ApplicationStatus>(`/api/v1/applications/status/${citizenId}`)
+export function getApplicationStatus(
+  citizenId: string,
+  params?: { birthDate?: string; ref?: string },
+) {
+  return axios.get<ApplicationStatus>(`/api/v1/applications/status/${citizenId}`, {
+    params,
+  })
 }
