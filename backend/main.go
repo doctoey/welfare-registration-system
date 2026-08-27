@@ -59,8 +59,25 @@ func handleGetOfficer(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(applications)
 }
 
+func handleGetStatus(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	citizenID := r.PathValue("citizenId")
+
+	for _, app := range applications {
+		if app.CitizenID == citizenID {
+			json.NewEncoder(w).Encode(app)
+			return
+		}
+	}
+
+	http.Error(w, "APPLICATION_NOT_FOUND", http.StatusNotFound)
+}
+
 func main() {
 	http.HandleFunc("GET /api/v1/officer/applications", handleGetOfficer)
+	http.HandleFunc("GET /api/v1/applications/status/{citizenId}", handleGetStatus)
 
 	fmt.Println("port run at : http://localhost:8080")
 	http.ListenAndServe(":8080", nil)
