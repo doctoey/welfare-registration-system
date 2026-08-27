@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 type Application struct {
@@ -54,11 +55,38 @@ var applications = []Application{
 	},
 }
 
+func isValidThaiID(id string) bool {
+	clean := strings.ReplaceAll(id, "-", "")
+	if len(clean) != 13 {
+		return false
+	}
+	sum := 0
+	for i := 0; i < 12; i++ {
+		digit := int(clean[i] - '0')
+		sum += digit * (13 - i)
+	}
+	checkDigit := (11 - (sum % 11)) % 10
+	return checkDigit == int(clean[12]-'0')
+}
+
 func handleGetOfficer(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
-	json.NewEncoder(w).Encode(applications)
+	statusFilter := r.URL.Query().Get("status")
+	var result []Application
+
+	for _, app := range applications {
+		if statusFilter == "" || statusFilter == "all" || app.Status == statusFilter {
+			result = append(result, app)
+		}
+	}
+
+	if result == nil {
+		result = []Application{}
+	}
+
+	json.NewEncoder(w).Encode(result)
 }
 
 func handleGetStatus(w http.ResponseWriter, r *http.Request) {
@@ -83,6 +111,16 @@ func handleCreateApplication(w http.ResponseWriter, r *http.Request) {
 
 	var req Application
 	json.NewDecoder(r.Body).Decode(&req)
+
+	if req.CitizenID == "" || req.FullName == "" {
+		http.Error(w, "กรุณากรอกข้อมูลให้ครบถ้วน", http.StatusBadRequest)
+		return
+	}
+
+	if !isValidThaiID(req.CitizenID) {
+		http.Error(w, "Invalid citizen ID checksum", http.StatusBadRequest)
+		return
+	}
 
 	for _, app := range applications {
 		if app.CitizenID == req.CitizenID {
@@ -113,6 +151,11 @@ func handleUpdateStatus(w http.ResponseWriter, r *http.Request) {
 		Reason string `json:"reason"`
 	}
 	json.NewDecoder(r.Body).Decode(&body)
+
+	if body.Status == "rejected" && strings.TrimSpace(body.Reason) == "" {
+		http.Error(w, "REASON_REQUIRED_FOR_REJECT", http.StatusBadRequest)
+		return
+	}
 
 	for i, app := range applications {
 		if app.ID == id {
