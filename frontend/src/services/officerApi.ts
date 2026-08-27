@@ -1,27 +1,26 @@
 import axios from 'axios'
+import { sharedApplicationsStore } from './mockStore'
 
 export interface OfficerApplication {
   id: number
+  referenceNumber: string
   citizenId: string
   fullName: string
+  birthDate: string
   annualIncome: number
+  currentAddress: string
   status: 'pending' | 'approved' | 'rejected'
   reason?: string
+  submittedAt: string
 }
-
-let mockApplicationsStore: OfficerApplication[] = [
-  { id: 1, citizenId: '1100400123450', fullName: 'สมชาย ใจดี', annualIncome: 54000, status: 'pending' },
-  { id: 2, citizenId: '1101700205673', fullName: 'สมหญิง รักดี', annualIncome: 72000, status: 'approved' },
-  { id: 3, citizenId: '1102500337895', fullName: 'วิชัย ตั้งใจ', annualIncome: 38000, status: 'rejected', reason: 'เอกสารไม่ตรงตามความเป็นจริง' },
-]
 
 export function mockGetOfficerApplications() {
   return new Promise<{ data: OfficerApplication[] }>((resolve) => {
     setTimeout(() => {
       resolve({
-        data: [...mockApplicationsStore],
+        data: [...sharedApplicationsStore],
       })
-    }, 500)
+    }, 400)
   })
 }
 
@@ -32,27 +31,24 @@ export function mockUpdateApplicationStatus(
 ) {
   return new Promise<{ data: OfficerApplication }>((resolve, reject) => {
     setTimeout(() => {
-      // 1. ตรวจสอบเงื่อนไข Reject ต้องมี reason
       if (status === 'rejected' && (!reason || !reason.trim())) {
         reject(new Error('REASON_REQUIRED_FOR_REJECT'))
         return
       }
 
-      // 2. ค้นหารายการคำร้อง
-      const target = mockApplicationsStore.find((app) => app.id === id)
+      const target = sharedApplicationsStore.find((app) => app.id === id)
       if (!target) {
         reject(new Error('APPLICATION_NOT_FOUND'))
         return
       }
 
-      // 3. อัปเดตข้อมูล
       target.status = status
       target.reason = status === 'rejected' ? reason.trim() : undefined
 
       resolve({
         data: { ...target },
       })
-    }, 500)
+    }, 400)
   })
 }
 
@@ -65,8 +61,11 @@ export function updateApplicationStatus(
   status: OfficerApplication['status'],
   reason: string,
 ) {
-  return axios.patch<OfficerApplication>(`/api/v1/officer/applications/${id}/status`, {
-    status,
-    reason,
-  })
+  return axios.patch<OfficerApplication>(
+    `/api/v1/officer/applications/${id}/status`,
+    {
+      status,
+      reason,
+    },
+  )
 }
