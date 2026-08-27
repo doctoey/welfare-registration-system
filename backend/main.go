@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 )
 
 type Application struct {
@@ -19,6 +20,14 @@ type Application struct {
 	CurrentAddress  string  `json:"currentAddress"`
 	Status          string  `json:"status"`
 	Reason          string  `json:"reason,omitempty"`
+}
+
+type StatusResponse struct {
+	ReferenceNumber string `json:"referenceNumber"`
+	CitizenID       string `json:"citizenId"`
+	FullName        string `json:"fullName"`
+	Status          string `json:"status"`
+	Reason          string `json:"reason,omitempty"`
 }
 
 var applications = []Application{
@@ -69,6 +78,28 @@ func isValidThaiID(id string) bool {
 	return checkDigit == int(clean[12]-'0')
 }
 
+func maskName(name string) string {
+	parts := strings.Fields(name)
+	var maskedParts []string
+	for _, p := range parts {
+		runes := []rune(p)
+		if len(runes) <= 2 {
+			maskedParts = append(maskedParts, string(runes))
+		} else {
+			maskedParts = append(maskedParts, string(runes[:2])+strings.Repeat("*", utf8.RuneCountInString(p)-2))
+		}
+	}
+	return strings.Join(maskedParts, " ")
+}
+
+func maskCitizenID(id string) string {
+	clean := strings.ReplaceAll(id, "-", "")
+	if len(clean) != 13 {
+		return id
+	}
+	return fmt.Sprintf("%s-%s-*****-**-%s", clean[0:1], clean[1:5], clean[12:13])
+}
+
 func handleGetOfficer(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -93,11 +124,24 @@ func handleGetStatus(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
-	citizenID := r.PathValue("citizenId")
+	citizenID := strings.ReplaceAll(r.PathValue("citizenId"), "-", "")
+	birthDate := r.URL.Query().Get("birthDate")
+	refNumber := r.URL.Query().Get("ref")
 
 	for _, app := range applications {
-		if app.CitizenID == citizenID {
-			json.NewEncoder(w).Encode(app)
+		isMatchCitizen := app.CitizenID == citizenID
+		isMatchVerify := (birthDate != "" && app.BirthDate == birthDate) ||
+			(refNumber != "" && strings.EqualFold(app.ReferenceNumber, refNumber))
+
+		if isMatchCitizen && isMatchVerify {
+			response := StatusResponse{
+				ReferenceNumber: app.ReferenceNumber,
+				CitizenID:       maskCitizenID(app.CitizenID),
+				FullName:        maskName(app.FullName),
+				Status:          app.Status,
+				Reason:          app.Reason,
+			}
+			json.NewEncoder(w).Encode(response)
 			return
 		}
 	}
@@ -112,7 +156,7 @@ func handleCreateApplication(w http.ResponseWriter, r *http.Request) {
 	var req Application
 	json.NewDecoder(r.Body).Decode(&req)
 
-	if req.CitizenID == "" || req.FullName == "" {
+	if req.CitizenID == "" || req.FullName == "" || req.BirthDate == "" {
 		http.Error(w, "กรุณากรอกข้อมูลให้ครบถ้วน", http.StatusBadRequest)
 		return
 	}
@@ -137,7 +181,11 @@ func handleCreateApplication(w http.ResponseWriter, r *http.Request) {
 	applications = append([]Application{req}, applications...)
 
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]string{"referenceNumber": refNumber})
+	json.NewEncoder(w).Encode(map[string]string{
+		"referenceNumber": refNumber,
+		"citizenId":       req.CitizenID,
+		"birthDate":       req.BirthDate,
+	})
 }
 
 func handleUpdateStatus(w http.ResponseWriter, r *http.Request) {
