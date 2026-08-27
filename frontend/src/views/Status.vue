@@ -16,7 +16,7 @@ import {
   ShieldCheck,
   Sparkles,
 } from 'lucide-vue-next'
-import { mockGetApplicationStatus, type ApplicationStatus } from '@/services/statusApi'
+import { getApplicationStatus, type ApplicationStatus } from '@/services/statusApi'
 
 const citizenId = ref('')
 const status = ref<ApplicationStatus | null>(null)
@@ -65,13 +65,14 @@ async function searchStatus() {
 
   isSearching.value = true
   try {
-    const response = await mockGetApplicationStatus(citizenIdDigits)
+    const response = await getApplicationStatus(citizenIdDigits)
     status.value = response.data
-  } catch (error) {
-    errorMessage.value =
-      error instanceof Error && error.message === 'APPLICATION_NOT_FOUND'
-        ? 'ไม่พบข้อมูลคำร้องของเลขบัตรประชาชนนี้ในระบบ กรุณาตรวจสอบเลขบัตรหรือยื่นคำร้องใหม่'
-        : 'ไม่สามารถค้นหาสถานะได้ กรุณาลองใหม่อีกครั้ง'
+  } catch (error: any) {
+    if (error.response?.status === 404) {
+      errorMessage.value = 'ไม่พบข้อมูลคำร้องของเลขบัตรประชาชนนี้ในระบบ กรุณาตรวจสอบเลขบัตรหรือยื่นคำร้องใหม่'
+    } else {
+      errorMessage.value = 'ไม่สามารถค้นหาสถานะได้ กรุณาลองใหม่อีกครั้ง'
+    }
   } finally {
     isSearching.value = false
   }

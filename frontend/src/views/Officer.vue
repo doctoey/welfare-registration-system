@@ -20,8 +20,8 @@ import {
   RefreshCw,
 } from 'lucide-vue-next'
 import {
-  mockGetOfficerApplications,
-  mockUpdateApplicationStatus,
+  getOfficerApplications,
+  updateApplicationStatus,
   type OfficerApplication,
 } from '@/services/officerApi'
 
@@ -89,8 +89,10 @@ function openActionDialog(application: OfficerApplication) {
 async function loadData() {
   isLoading.value = true
   try {
-    const response = await mockGetOfficerApplications()
+    const response = await getOfficerApplications()
     applications.value = response.data
+  } catch (error) {
+    console.error('Failed to load officer applications:', error)
   } finally {
     isLoading.value = false
   }
@@ -107,7 +109,7 @@ async function updateStatus() {
 
   isUpdating.value = true
   try {
-    const response = await mockUpdateApplicationStatus(
+    const response = await updateApplicationStatus(
       selectedApplication.value.id,
       selectedDecision.value,
       reason.value.trim(),
@@ -118,11 +120,13 @@ async function updateStatus() {
       application.reason = response.data.reason
     }
     isActionDialogOpen.value = false
-  } catch (err) {
-    actionError.value =
-      err instanceof Error && err.message === 'REASON_REQUIRED_FOR_REJECT'
-        ? 'กรุณาระบุเหตุผลเมื่อเลือกไม่อนุมัติ'
-        : 'ไม่สามารถบันทึกสถานะได้ กรุณาลองใหม่อีกครั้ง'
+  } catch (err: any) {
+    const errorMsg = err.response?.data || err.message || ''
+    if (typeof errorMsg === 'string' && errorMsg.includes('REASON_REQUIRED_FOR_REJECT')) {
+      actionError.value = 'กรุณาระบุเหตุผลเมื่อเลือกไม่อนุมัติ'
+    } else {
+      actionError.value = 'ไม่สามารถบันทึกสถานะได้ กรุณาลองใหม่อีกครั้ง'
+    }
   } finally {
     isUpdating.value = false
   }

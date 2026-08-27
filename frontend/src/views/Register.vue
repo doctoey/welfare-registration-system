@@ -18,7 +18,7 @@ import {
   Check,
   Sparkles,
 } from 'lucide-vue-next'
-import { mockCreateApplication } from '../services/applicationApi'
+import { createApplication } from '../services/applicationApi'
 import { SAMPLE_NEW_VALID_IDS } from '../services/mockStore'
 
 const citizenId = ref('')
@@ -147,21 +147,18 @@ async function handleSubmit() {
   isSubmitting.value = true
 
   try {
-    const response = await mockCreateApplication(payload)
+    const response = await createApplication(payload)
     referenceNumber.value = response.data.referenceNumber
     submitted.value = true
-  } catch (error) {
+  } catch (error: any) {
     console.error(error)
-    if (error instanceof Error) {
-      if (error.message === 'CITIZEN_ALREADY_REGISTERED') {
-        apiError.value = 'เลขประจำตัวประชาชนนี้ได้ลงทะเบียนในระบบแล้ว ไม่สามารถลงทะเบียนซ้ำได้'
-      } else if (error.message === 'INCOME_EXCEEDS_LIMIT') {
-        apiError.value = 'รายได้เกินเกณฑ์ที่กำหนดสำหรับการลงทะเบียน (ต้องไม่เกิน 100,000 บาท/ปี)'
-      } else {
-        apiError.value = 'ไม่สามารถส่งคำร้องได้ กรุณาลองใหม่อีกครั้ง'
-      }
+    const errorMsg = error.response?.data || error.message || ''
+    if (typeof errorMsg === 'string' && errorMsg.includes('CITIZEN_ALREADY_REGISTERED')) {
+      apiError.value = 'เลขประจำตัวประชาชนนี้ได้ลงทะเบียนในระบบแล้ว ไม่สามารถลงทะเบียนซ้ำได้'
+    } else if (typeof errorMsg === 'string' && errorMsg.includes('Invalid citizen ID')) {
+      apiError.value = 'เลขประจำตัวประชาชนไม่ถูกต้องตามระบบตรวจสอบ (Checksum)'
     } else {
-      apiError.value = 'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ กรุณาลองใหม่อีกครั้ง'
+      apiError.value = 'ไม่สามารถส่งคำร้องได้ กรุณาลองใหม่อีกครั้ง'
     }
   } finally {
     isSubmitting.value = false
