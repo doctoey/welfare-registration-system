@@ -78,7 +78,17 @@ async function handleSubmit() {
     submitted.value = true
   } catch (error) {
     console.error(error)
-    apiError.value = 'ไม่สามารถส่งคำร้องได้ กรุณาลองใหม่อีกครั้ง'
+    if (error instanceof Error) {
+      if (error.message === 'CITIZEN_ALREADY_REGISTERED') {
+        apiError.value = 'เลขประจำตัวประชาชนนี้ได้ลงทะเบียนในระบบแล้ว'
+      } else if (error.message === 'INCOME_EXCEEDS_LIMIT') {
+        apiError.value = 'รายได้เกินเกณฑ์ที่กำหนดสำหรับการลงทะเบียน (ไม่เกิน 100,000 บาท/ปี)'
+      } else {
+        apiError.value = 'ไม่สามารถส่งคำร้องได้ กรุณาลองใหม่อีกครั้ง'
+      }
+    } else {
+      apiError.value = 'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ กรุณาลองใหม่อีกครั้ง'
+    }
   } finally {
     isSubmitting.value = false
   }

@@ -48,24 +48,30 @@ async function searchStatus() {
         <div class="space-y-2">
           <Label for="status-citizen-id">National ID</Label>
           <Input id="status-citizen-id" v-model="citizenId" inputmode="numeric" maxlength="13" />
-          <p class="text-xs text-slate-500">Mock test ID: {{ MOCK_CITIZEN_ID }}</p>
-        </div>
+        <p class="text-xs text-slate-500">
+          Mock IDs: {{ MOCK_CITIZEN_ID }} (รอตรวจสอบ), 1101700205673 (อนุมัติ), 1102500337895 (ไม่อนุมัติ)
+        </p>
+      </div>
 
-        <p v-if="errorMessage" class="rounded-md bg-red-50 p-3 text-sm text-red-700">{{ errorMessage }}</p>
+      <p v-if="errorMessage" class="rounded-md bg-red-50 p-3 text-sm text-red-700">{{ errorMessage }}</p>
 
-        <Button type="submit" :disabled="isSearching">
-          {{ isSearching ? 'กำลังค้นหา...' : 'ค้นหาสถานะ' }}
-        </Button>
-      </form>
-    </Card>
+      <Button type="submit" :disabled="isSearching">
+        {{ isSearching ? 'กำลังค้นหา...' : 'ค้นหาสถานะ' }}
+      </Button>
+    </form>
+  </Card>
 
-    <Card v-if="status" class="mx-auto max-w-2xl p-6">
-      <h2 class="text-xl font-semibold">ผลการค้นหา</h2>
-      <dl class="mt-4 space-y-2 text-sm">
-        <div class="flex justify-between gap-4"><dt class="text-slate-500">ชื่อ</dt><dd>{{ status.fullName }}</dd></div>
-        <div class="flex justify-between gap-4"><dt class="text-slate-500">เลขอ้างอิง</dt><dd>{{ status.referenceNumber }}</dd></div>
-        <div class="flex justify-between gap-4"><dt class="text-slate-500">สถานะ</dt><dd><Badge :class="statusClass(status.status)">{{ statusLabel(status.status) }}</Badge></dd></div>
-      </dl>
-    </Card>
+  <Card v-if="status" class="mx-auto max-w-2xl p-6">
+    <h2 class="text-xl font-semibold">ผลการค้นหา</h2>
+    <dl class="mt-4 space-y-2 text-sm">
+      <div class="flex justify-between gap-4"><dt class="text-slate-500">ชื่อ</dt><dd>{{ status.fullName }}</dd></div>
+      <div class="flex justify-between gap-4"><dt class="text-slate-500">เลขอ้างอิง</dt><dd>{{ status.referenceNumber }}</dd></div>
+      <div class="flex justify-between gap-4"><dt class="text-slate-500">สถานะ</dt><dd><Badge :class="statusClass(status.status)">{{ statusLabel(status.status) }}</Badge></dd></div>
+      <div v-if="status.reason" class="flex justify-between gap-4 pt-2 border-t border-slate-100 text-red-600">
+        <dt class="font-medium">เหตุผลที่ไม่อนุมัติ</dt>
+        <dd class="text-right">{{ status.reason }}</dd>
+      </div>
+    </dl>
+  </Card>
   </main>
 </template>
