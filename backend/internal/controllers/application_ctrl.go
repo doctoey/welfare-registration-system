@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"net/http"
-	"strconv"
 	"welfare-registration-backend/internal/entities"
 
 	"github.com/gin-gonic/gin"
@@ -60,12 +59,18 @@ func (ctrl *ApplicationController) GetStatus(c *gin.Context) {
 
 	res, err := ctrl.usecase.GetStatus(citizenID, birthDate, refNumber)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "APPLICATION_NOT_FOUND"})
+		switch err.Error() {
+		case "VERIFICATION_FAILED":
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "VERIFICATION_FAILED"})
+		default:
+			c.JSON(http.StatusNotFound, gin.H{"error": "APPLICATION_NOT_FOUND"})
+		}
 		return
 	}
 
 	c.JSON(http.StatusOK, res)
 }
+
 
 func (ctrl *ApplicationController) GetOfficerApplications(c *gin.Context) {
 	statusFilter := c.Query("status")
@@ -79,10 +84,9 @@ func (ctrl *ApplicationController) GetOfficerApplications(c *gin.Context) {
 }
 
 func (ctrl *ApplicationController) UpdateStatus(c *gin.Context) {
-	idStr := c.Param("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid application ID"})
+	id := c.Param("id")
+	if id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Application ID is required"})
 		return
 	}
 

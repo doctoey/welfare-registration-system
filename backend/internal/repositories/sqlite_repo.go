@@ -1,0 +1,125 @@
+package repositories
+
+import (
+	"errors"
+	"strings"
+	"time"
+	"welfare-registration-backend/internal/entities"
+
+	"github.com/glebarez/sqlite"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
+)
+
+type sqliteRepository struct {
+	db *gorm.DB
+}
+
+func NewSQLiteRepository(dbPath string) (entities.ApplicationRepository, error) {
+	db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Silent),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if err := db.AutoMigrate(&entities.Application{}); err != nil {
+		return nil, err
+	}
+
+	var count int64
+	db.Model(&entities.Application{}).Count(&count)
+	if count == 0 {
+		initialData := []entities.Application{
+			{
+				ID:              "a1000000-0000-0000-0000-000000000001",
+				ReferenceNumber: "WRS-2026-000001",
+				CitizenID:       "1100400123450",
+				FullName:        "สมชาย ใจดี",
+				FirstName:       "สมชาย",
+				LastName:        "ใจดี",
+				BirthDate:       "1990-05-12",
+				AnnualIncome:    54000,
+				CurrentAddress:  "99/1 แขวงดินแดง เขตดินแดง กทม. 10400",
+				Status:          "pending",
+				CreatedAt:       time.Now().Add(-48 * time.Hour),
+				UpdatedAt:       time.Now().Add(-48 * time.Hour),
+			},
+			{
+				ID:              "a2000000-0000-0000-0000-000000000002",
+				ReferenceNumber: "WRS-2026-000002",
+				CitizenID:       "1101700205673",
+				FullName:        "สมหญิง รักดี",
+				FirstName:       "สมหญิง",
+				LastName:        "รักดี",
+				BirthDate:       "1988-11-20",
+				AnnualIncome:    72000,
+				CurrentAddress:  "12/4 ต.สุเทพ อ.เมือง จ.เชียงใหม่ 50200",
+				Status:          "approved",
+				CreatedAt:       time.Now().Add(-24 * time.Hour),
+				UpdatedAt:       time.Now().Add(-24 * time.Hour),
+			},
+			{
+				ID:              "a3000000-0000-0000-0000-000000000003",
+				ReferenceNumber: "WRS-2026-000003",
+				CitizenID:       "1102500337895",
+				FullName:        "วิชัย ตั้งใจ",
+				FirstName:       "วิชัย",
+				LastName:        "ตั้งใจ",
+				BirthDate:       "1985-02-14",
+				AnnualIncome:    142000,
+				CurrentAddress:  "45 ถ.มิตรภาพ ต.ในเมือง อ.เมือง จ.ขอนแก่น 40000",
+				Status:          "rejected",
+				Reason:          "รายได้รวมของครัวเรือนเกินเกณฑ์ที่กำหนด (ไม่เกิน 100,000 บาท/ปี)",
+				CreatedAt:       time.Now().Add(-12 * time.Hour),
+				UpdatedAt:       time.Now().Add(-12 * time.Hour),
+			},
+		}
+		db.Create(&initialData)
+	}
+
+	return &sqliteRepository{db: db}, nil
+}
+
+func (r *sqliteRepository) FindAll(statusFilter string) ([]entities.Application, error) {
+	var apps []entities.Application
+	query := r.db.Order("created_at DESC")
+	if statusFilter != "" && statusFilter != "all" {
+		query = query.Where("status = ?", statusFilter)
+	}
+	if err := query.Find(&apps).Error; err != nil {
+		return nil, err
+	}
+	return apps, nil
+}
+
+func (r *sqliteRepository) FindByCitizenID(citizenID string) (*entities.Application, error) {
+	cleanID := strings.ReplaceAll(citizenID, "-", "")
+	var app entities.Application
+	if err := r.db.Where("citizen_id = ?", cleanID).First(&app).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("APPLICATION_NOT_FOUND")
+		}
+		return nil, err
+	}
+	return &app, nil
+}
+
+func (r *sqliteRepository) FindByID(id string) (*entities.Application, error) {
+	var app entities.Application
+	if err := r.db.Where("id = ?", id).First(&app).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("APPLICATION_NOT_FOUND")
+		}
+		return nil, err
+	}
+	return &app, nil
+}
+
+func (r *sqliteRepository) Save(app *entities.Application) error {
+	return r.db.Create(app).Error
+}
+
+func (r *sqliteRepository) Update(app *entities.Application) error {
+	return r.db.Save(app).Error
+}

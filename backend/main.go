@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"welfare-registration-backend/internal/controllers"
 	"welfare-registration-backend/internal/repositories"
 	"welfare-registration-backend/internal/usecases"
@@ -28,13 +29,18 @@ func main() {
 	r := gin.Default()
 	r.Use(corsMiddleware())
 
-	repo := repositories.NewInMemoryRepository()
+	repo, err := repositories.NewSQLiteRepository("welfare.db")
+	if err != nil {
+		log.Fatalf("unable to connect Database: %v", err)
+	}
+
 	usecase := usecases.NewApplicationUsecase(repo)
+
 	ctrl := controllers.NewApplicationController(usecase)
 
 	ctrl.RegisterRoutes(r)
 
 	port := ":8080"
-	fmt.Printf("🚀 Welfare Registration Backend (Clean Architecture: Entities -> Repositories -> Usecases -> Controllers) รันอยู่ที่ http://localhost%s\n", port)
+	fmt.Printf("run on http://localhost%s\n", port)
 	r.Run(port)
 }

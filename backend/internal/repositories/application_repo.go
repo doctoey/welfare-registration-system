@@ -6,20 +6,20 @@ import (
 	"sync"
 	"time"
 	"welfare-registration-backend/internal/entities"
+
+	"github.com/google/uuid"
 )
 
 type inMemoryRepository struct {
 	sync.RWMutex
 	applications []entities.Application
-	nextID       int
 }
 
 func NewInMemoryRepository() entities.ApplicationRepository {
 	return &inMemoryRepository{
-		nextID: 4,
 		applications: []entities.Application{
 			{
-				ID:              1,
+				ID:              "a1000000-0000-0000-0000-000000000001",
 				ReferenceNumber: "WRS-2026-000001",
 				CitizenID:       "1100400123450",
 				FullName:        "สมชาย ใจดี",
@@ -27,10 +27,11 @@ func NewInMemoryRepository() entities.ApplicationRepository {
 				AnnualIncome:    54000,
 				CurrentAddress:  "99/1 แขวงดินแดง เขตดินแดง กทม. 10400",
 				Status:          "pending",
-				SubmittedAt:     time.Now().Add(-48 * time.Hour),
+				CreatedAt:       time.Now().Add(-48 * time.Hour),
+				UpdatedAt:       time.Now().Add(-48 * time.Hour),
 			},
 			{
-				ID:              2,
+				ID:              "a2000000-0000-0000-0000-000000000002",
 				ReferenceNumber: "WRS-2026-000002",
 				CitizenID:       "1101700205673",
 				FullName:        "สมหญิง รักดี",
@@ -38,10 +39,11 @@ func NewInMemoryRepository() entities.ApplicationRepository {
 				AnnualIncome:    72000,
 				CurrentAddress:  "12/4 ต.สุเทพ อ.เมือง จ.เชียงใหม่ 50200",
 				Status:          "approved",
-				SubmittedAt:     time.Now().Add(-24 * time.Hour),
+				CreatedAt:       time.Now().Add(-24 * time.Hour),
+				UpdatedAt:       time.Now().Add(-24 * time.Hour),
 			},
 			{
-				ID:              3,
+				ID:              "a3000000-0000-0000-0000-000000000003",
 				ReferenceNumber: "WRS-2026-000003",
 				CitizenID:       "1102500337895",
 				FullName:        "วิชัย ตั้งใจ",
@@ -50,7 +52,8 @@ func NewInMemoryRepository() entities.ApplicationRepository {
 				CurrentAddress:  "45 ถ.มิตรภาพ ต.ในเมือง อ.เมือง จ.ขอนแก่น 40000",
 				Status:          "rejected",
 				Reason:          "รายได้รวมของครัวเรือนเกินเกณฑ์ที่กำหนด (ไม่เกิน 100,000 บาท/ปี)",
-				SubmittedAt:     time.Now().Add(-12 * time.Hour),
+				CreatedAt:       time.Now().Add(-12 * time.Hour),
+				UpdatedAt:       time.Now().Add(-12 * time.Hour),
 			},
 		},
 	}
@@ -85,7 +88,7 @@ func (r *inMemoryRepository) FindByCitizenID(citizenID string) (*entities.Applic
 	return nil, errors.New("APPLICATION_NOT_FOUND")
 }
 
-func (r *inMemoryRepository) FindByID(id int) (*entities.Application, error) {
+func (r *inMemoryRepository) FindByID(id string) (*entities.Application, error) {
 	r.RLock()
 	defer r.RUnlock()
 
@@ -101,8 +104,9 @@ func (r *inMemoryRepository) Save(app *entities.Application) error {
 	r.Lock()
 	defer r.Unlock()
 
-	app.ID = r.nextID
-	r.nextID++
+	if app.ID == "" {
+		app.ID = uuid.New().String()
+	}
 	r.applications = append([]entities.Application{*app}, r.applications...)
 	return nil
 }

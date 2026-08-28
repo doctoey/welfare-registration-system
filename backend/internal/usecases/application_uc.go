@@ -8,6 +8,8 @@ import (
 	"time"
 	"unicode/utf8"
 	"welfare-registration-backend/internal/entities"
+
+	"github.com/google/uuid"
 )
 
 type applicationUsecase struct {
@@ -69,16 +71,30 @@ func (u *applicationUsecase) Register(dto entities.CreateApplicationDTO) (string
 		return "", errors.New("CITIZEN_ALREADY_REGISTERED")
 	}
 
+	names := strings.Fields(strings.TrimSpace(dto.FullName))
+	firstName := ""
+	lastName := ""
+	if len(names) > 0 {
+		firstName = names[0]
+	}
+	if len(names) > 1 {
+		lastName = strings.Join(names[1:], " ")
+	}
+
 	refNumber := fmt.Sprintf("WRS-2026-%06d", rand.Intn(900000)+100000)
 	newApp := entities.Application{
+		ID:              uuid.New().String(),
 		ReferenceNumber: refNumber,
 		CitizenID:       cleanCitizenID,
 		FullName:        strings.TrimSpace(dto.FullName),
+		FirstName:       firstName,
+		LastName:        lastName,
 		BirthDate:       dto.BirthDate,
 		AnnualIncome:    dto.AnnualIncome,
 		CurrentAddress:  strings.TrimSpace(dto.CurrentAddress),
 		Status:          "pending",
-		SubmittedAt:     time.Now(),
+		CreatedAt:       time.Now(),
+		UpdatedAt:       time.Now(),
 	}
 
 	if err := u.repo.Save(&newApp); err != nil {
@@ -88,13 +104,22 @@ func (u *applicationUsecase) Register(dto entities.CreateApplicationDTO) (string
 	return refNumber, nil
 }
 
+func normalizeDateStr(s string) string {
+	if len(s) >= 10 {
+		return s[:10]
+	}
+	return s
+}
+
 func (u *applicationUsecase) GetStatus(citizenID string, birthDate string, refNumber string) (*entities.StatusResponseDTO, error) {
 	app, err := u.repo.FindByCitizenID(citizenID)
 	if err != nil {
 		return nil, errors.New("APPLICATION_NOT_FOUND")
 	}
 
-	isMatchDOB := birthDate != "" && app.BirthDate == birthDate
+	// Normalize: SQLite date อาจออกมาเป็น "1985-02-14T00:00:00Z" ต้องตัดให้เหลือ YYYY-MM-DD
+	appBirthDate := normalizeDateStr(app.BirthDate)
+	isMatchDOB := birthDate != "" && appBirthDate == normalizeDateStr(birthDate)
 	isMatchRef := refNumber != "" && strings.EqualFold(app.ReferenceNumber, refNumber)
 
 	if !isMatchDOB && !isMatchRef {
@@ -114,7 +139,7 @@ func (u *applicationUsecase) GetOfficerApplications(statusFilter string) ([]enti
 	return u.repo.FindAll(statusFilter)
 }
 
-func (u *applicationUsecase) ReviewApplication(id int, dto entities.UpdateStatusDTO) (*entities.Application, error) {
+func (u *applicationUsecase) ReviewApplication(id string, dto entities.UpdateStatusDTO) (*entities.Application, error) {
 	app, err := u.repo.FindByID(id)
 	if err != nil {
 		return nil, errors.New("APPLICATION_NOT_FOUND")
@@ -130,6 +155,7 @@ func (u *applicationUsecase) ReviewApplication(id int, dto entities.UpdateStatus
 	} else {
 		app.Reason = ""
 	}
+	app.UpdatedAt = time.Now()
 
 	if err := u.repo.Update(app); err != nil {
 		return nil, err
