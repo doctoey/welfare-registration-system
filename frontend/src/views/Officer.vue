@@ -121,11 +121,11 @@ async function updateStatus() {
     }
     isActionDialogOpen.value = false
   } catch (err: any) {
-    const errorMsg = err.response?.data || err.message || ''
-    if (typeof errorMsg === 'string' && errorMsg.includes('REASON_REQUIRED_FOR_REJECT')) {
+    const errorCode: string = err.response?.data?.error ?? err.message ?? ''
+    if (errorCode.includes('REASON_REQUIRED_FOR_REJECT')) {
       actionError.value = 'กรุณาระบุเหตุผลเมื่อเลือกไม่อนุมัติ'
     } else {
-      actionError.value = 'ไม่สามารถบันทึกสถานะได้ กรุณาลองใหม่อีกครั้ง'
+      actionError.value = `ไม่สามารถบันทึกสถานะได้ กรุณาลองใหม่อีกครั้ง (${errorCode || 'unknown'})`
     }
   } finally {
     isUpdating.value = false

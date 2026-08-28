@@ -2,7 +2,7 @@ import axios from "axios";
 import { sharedApplicationsStore } from "./mockStore";
 
 export interface OfficerApplication {
-  id: number;
+  id: string | number;
   referenceNumber: string;
   citizenId: string;
   fullName: string;
@@ -25,7 +25,7 @@ export function mockGetOfficerApplications() {
 }
 
 export function mockUpdateApplicationStatus(
-  id: number,
+  id: string | number,
   status: OfficerApplication["status"],
   reason: string,
 ) {
@@ -36,7 +36,7 @@ export function mockUpdateApplicationStatus(
         return;
       }
 
-      const target = sharedApplicationsStore.find((app) => app.id === id);
+      const target = sharedApplicationsStore.find((app) => String(app.id) === String(id));
       if (!target) {
         reject(new Error("APPLICATION_NOT_FOUND"));
         return;
@@ -59,7 +59,7 @@ export function getOfficerApplications(status?: string) {
 }
 
 export function updateApplicationStatus(
-  id: number,
+  id: string | number,
   status: OfficerApplication["status"],
   reason: string,
 ) {

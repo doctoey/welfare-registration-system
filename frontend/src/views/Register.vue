@@ -156,17 +156,18 @@ async function handleSubmit() {
     submitted.value = true
   } catch (error: any) {
     console.error(error)
-    const errorMsg = error.response?.data || error.message || ''
-    if (typeof errorMsg === 'string' && errorMsg.includes('CITIZEN_ALREADY_REGISTERED')) {
+    const errorCode: string = error.response?.data?.error ?? error.message ?? ''
+    if (errorCode.includes('CITIZEN_ALREADY_REGISTERED')) {
       apiError.value = 'เลขประจำตัวประชาชนนี้ได้ลงทะเบียนในระบบแล้ว ไม่สามารถลงทะเบียนซ้ำได้'
-    } else if (typeof errorMsg === 'string' && errorMsg.includes('Invalid citizen ID')) {
+    } else if (errorCode.includes('INVALID_CITIZEN_ID') || errorCode.includes('Invalid citizen ID')) {
       apiError.value = 'เลขประจำตัวประชาชนไม่ถูกต้องตามระบบตรวจสอบ (Checksum)'
     } else {
-      apiError.value = 'ไม่สามารถส่งคำร้องได้ กรุณาลองใหม่อีกครั้ง'
+      apiError.value = `ไม่สามารถส่งคำร้องได้ กรุณาลองใหม่อีกครั้ง (${errorCode || 'unknown'})`
     }
   } finally {
     isSubmitting.value = false
   }
+
 }
 </script>
 
