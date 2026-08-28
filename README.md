@@ -98,3 +98,28 @@ Citizen ยื่นคำร้อง
   ↙           ↘
 [Approved]  [Rejected] + เหตุผล
 ```
+
+---
+
+## 📋 Planning Board
+
+### 1. Requirements
+![Requirements](docs/images/01-requirements.png)
+
+### 2. System Flow
+![System Flow](docs/images/02-system-flow.png)
+
+### 3. UI / UX
+![UI/UX](docs/images/03-ui-ux.png)
+
+### 4. Architecture
+![Architecture](docs/images/04-architect.png)
+
+### 5. Specifications
+![Specifications](docs/images/05-specifications.png)
+
+### 6. DB Schema
+![DB Schema](docs/images/06-db-schema.png)
+
+### 7. Security & PDPA
+![Security](docs/images/07-security.png)
