@@ -42,5 +42,7 @@ func main() {
 
 	port := ":8080"
 	fmt.Printf("run on http://localhost%s\n", port)
-	r.Run(port)
+	if err := r.Run(port); err != nil {
+		log.Fatalf("ไม่สามารถเริ่ม server ได้: %v", err)
+	}
 }
